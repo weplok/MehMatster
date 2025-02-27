@@ -35,7 +35,7 @@ def get_groups(course: str) -> list:
     return groups
 
 
-def get_schedule(course: str, group: str, period: str):
+def get_schedule(course: str, group: str, period: str="week") -> dict:
     """
     :param course: Курс полностью (напр: Бакалавриат, 1 курс)
     :param group: Группа полностью (напр: ПМИ, 1 группа)
@@ -83,4 +83,5 @@ def get_schedule(course: str, group: str, period: str):
                 "start_time": row["start_time"],
                 "end_time": row["end_time"],
             })
+
     return schedule

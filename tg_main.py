@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import pprint
 from functions.db_funcs import create_user, get_user
 from functions.schedule import get_groups, get_schedule
 from aiogram import Bot, Dispatcher, types
@@ -236,13 +237,13 @@ async def process_sch_subchoice(callback_query: types.CallbackQuery):
     subchoice = callback_query.data
     await callback_query.answer()
     if subchoice == "schedule_today":
-        await callback_query.message.answer(f"{get_schedule(person["course"], person["group"], "today")}")
+        await callback_query.message.answer(f"{pprint.pformat(get_schedule(person["course"], person["group"], "today"))}")
     elif subchoice == "schedule_tomorrow":
-        await callback_query.message.answer(f"{get_schedule(person["course"], person["group"], "tomorrow")}")
+        await callback_query.message.answer(f"{pprint.pformat(get_schedule(person["course"], person["group"], "tomorrow"))}")
     elif subchoice == "schedule_week":
-        await callback_query.message.answer(f"{get_schedule(person["course"], person["group"], "week")}")
+        await callback_query.message.answer(f"{pprint.pformat(get_schedule(person["course"], person["group"], "week"))}")
     elif subchoice == "schedule_atomorrow":
-        await callback_query.message.answer(f"{get_schedule(person["course"], person["group"], "atomorrow")}")
+        await callback_query.message.answer(f"{pprint.pformat(get_schedule(person["course"], person["group"], "atomorrow"))}")
 
 @dp.callback_query(lambda c: c.data.startswith('places_'))
 async def process_news_subchoice(callback_query: types.CallbackQuery):

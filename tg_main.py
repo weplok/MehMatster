@@ -55,6 +55,14 @@ course_keyboard = ReplyKeyboardMarkup(
 )
 
 
+# Клавиатура для бюджета
+budget_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="БЮДЖЕТ", callback_data="direction_pmi")],
+        [InlineKeyboardButton(text="ПЛАТКА", callback_data="direction_business")]
+    ]
+)
+
 # Клавиатура для выбора направления (учитель)
 direction_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
@@ -218,6 +226,7 @@ async def process_pmi_subcategory(callback: types.CallbackQuery):
         await callback.message.answer("Информация о финансировании на ПМИ: ...")
     elif callback.data == "pmi_infrastructure":
         await callback.message.answer("Информация об инфраструктуре на ПМИ: ...")
+
     await callback.answer()
 
 @dp.callback_query(lambda c: c.data.startswith('schedule_'))

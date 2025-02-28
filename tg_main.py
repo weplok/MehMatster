@@ -102,6 +102,7 @@ def get_inline_keyboard(choice: str):
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="Сегодня", callback_data="schedule_today")],
             [InlineKeyboardButton(text="Завтра", callback_data="schedule_tomorrow")],
+            [InlineKeyboardButton(text="Послезавтра", callback_data="schedule_atomorrow")],
             [InlineKeyboardButton(text="Неделя", callback_data="schedule_week")]
         ])
     elif choice == "Событие":
@@ -196,7 +197,7 @@ async def process_re_registration(callback: types.CallbackQuery):
         if get_user("tg", user_id)["is_abitur"] == 1:
             await callback.message.answer("Регистрация отменена. Продолжайте использование бота.", reply_markup=direction_keyboard)
         else:
-            await callback.message.answer("Регистрация отменена. Продолжайте использование бота.", reply_markup=main_keyboard)
+            await callback.message.answer("Регистрация отменена. Продолжа-йте использование бота.", reply_markup=main_keyboard)
 
 # Обработчик выбора направления (для учителя)
 @dp.callback_query(lambda callback: callback.data.startswith("direction"))
@@ -230,14 +231,18 @@ async def process_pmi_subcategory(callback: types.CallbackQuery):
 
 @dp.callback_query(lambda c: c.data.startswith('schedule_'))
 async def process_sch_subchoice(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    person = get_user("tg", user_id)
     subchoice = callback_query.data
     await callback_query.answer()
     if subchoice == "schedule_today":
-        await callback_query.message.answer("Расписание на сегодня")
+        await callback_query.message.answer(f"{get_schedule(person["course"], person["group"], "today")}")
     elif subchoice == "schedule_tomorrow":
-        await callback_query.message.answer("Расписание на завтра")
+        await callback_query.message.answer(f"{get_schedule(person["course"], person["group"], "tomorrow")}")
     elif subchoice == "schedule_week":
-        await callback_query.message.answer("Расписание на неделю")
+        await callback_query.message.answer(f"{get_schedule(person["course"], person["group"], "week")}")
+    elif subchoice == "schedule_atomorrow":
+        await callback_query.message.answer(f"{get_schedule(person["course"], person["group"], "atomorrow")}")
 
 @dp.callback_query(lambda c: c.data.startswith('places_'))
 async def process_news_subchoice(callback_query: types.CallbackQuery):

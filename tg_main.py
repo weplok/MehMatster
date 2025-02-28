@@ -8,6 +8,9 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
 from aiogram.exceptions import TelegramAPIError
+import asyncio
+import logging
+from parsing import student_get_news, applicant_count_free_places, applicant_count_paid_places, student_get_news_mehmat
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)

@@ -1,4 +1,5 @@
 import sqlite3
+import os
 
 
 def create_user(db_code: str, uid: int, name: str, course: str = None, group: str = None) -> bool:
@@ -8,12 +9,14 @@ def create_user(db_code: str, uid: int, name: str, course: str = None, group: st
     :param name: Имя
     :param course: Курс (напр. Бакалавриат, 1 курс) - у абитуриента НЕ УКАЗЫВАЕТСЯ
     :param group: Группа (напр. ПМИ, 1 группа) - у абитуриента НЕ УКАЗЫВАЕТСЯ
-    :return: True, если юзер создан, иначе False (неверный db_code или юзер уже авторизован)
+    :return: True, если юзер создан, иначе False (неверный db_code)
     """
 
     if db_code not in ["vk", "tg"]:
         return False
-    con = sqlite3.connect(f"db/{db_code}.sqlite3")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(base_dir, 'db', f"{db_code}.sqlite3")
+    con = sqlite3.connect(db_path)
     cur = con.cursor()
 
     if course is not None:
@@ -28,8 +31,10 @@ def create_user(db_code: str, uid: int, name: str, course: str = None, group: st
         cur.execute("""INSERT INTO users (id, name, course, groupa, is_abitur) VALUES (?, ?, ?, ?, ?)""",
                     (uid, name, course, group, is_abitur))
     except sqlite3.IntegrityError:
-        con.close()
-        return False
+        cur.execute("""UPDATE users
+        SET name = ?, course = ?, groupa = ?, is_abitur = ?
+        WHERE id == ?
+        """, (name, course, group, is_abitur, uid))
 
     con.commit()
     con.close()
@@ -46,7 +51,9 @@ def get_user(db_code: str, uid: int) -> dict:
     user_dict = {}
     if db_code not in ["vk", "tg"]:
         return user_dict
-    con = sqlite3.connect(f"db/{db_code}.sqlite3")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(base_dir, 'db', f"{db_code}.sqlite3")
+    con = sqlite3.connect(db_path)
     cur = con.cursor()
 
     udata = cur.execute("""SELECT * FROM users WHERE id == ?""", (uid,)).fetchone()

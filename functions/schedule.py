@@ -16,13 +16,13 @@ import datetime as dt
 import pandas
 import requests
 
-with open("files/courses.tsv", "r", encoding="utf-8") as csv_file:
+with open("functions/files/courses.tsv", "r", encoding="utf-8") as csv_file:
     reader = csv.DictReader(csv_file, delimiter="\t")
     course_urls = dict()
     for row in reader:
         course_urls[row["course"]] = row["id"]
 
-groups_urls = pandas.read_csv("files/groups.tsv", delimiter="\t")
+groups_urls = pandas.read_csv("functions/files/groups.tsv", delimiter="\t")
 
 
 # Получить список групп по названию курса

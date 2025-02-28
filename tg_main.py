@@ -1,8 +1,12 @@
-from aiogram import Bot, Dispatcher, types
-from aiogram.filters import Command
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 import asyncio
 import logging
+from functions.db_funcs import create_user, get_user
+from functions.schedule import get_groups, get_schedule
+from aiogram import Bot, Dispatcher, types
+from aiogram.filters import Command
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
+
+
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -14,17 +18,6 @@ API_TOKEN = '7362003844:AAFKaYk5S6DFnzyDFOauySExqOHQL29v-z4'
 # Инициализация бота и диспетчера
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
-
-# Моковые функции для работы с БД
-def get_user(code, user_id):
-    # Заглушка для функции get_user
-    # Возвращает пустой словарь, если пользователя нет, и словарь с данными, если он есть
-    return {}
-
-def create_user(code, user_id, name, course=None, group=None, is_abitur=None):
-    # Заглушка для функции create_user
-    # Создает пользователя в БД
-    logger.info(f"Создан пользователь: id={user_id}, name={name}, course={course}, group={group}")
 
 # Хранение данных пользователя (временное, вместо БД)
 user_data = {}
@@ -74,16 +67,16 @@ budget_keyboard = InlineKeyboardMarkup(
 direction_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [InlineKeyboardButton(text="ПМИ", callback_data="direction_pmi")],
-        [InlineKeyboardButton(text="ИВТ", callback_data="direction_business")]
+        [InlineKeyboardButton(text="ИВТ", callback_data="direction_ivt")]
     ]
 )
 
 # Клавиатура для выбора подкатегорий ПМИ
-pmi_subcategory_keyboard = InlineKeyboardMarkup(
+ivt_subcategory_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text="Условия", callback_data="pmi_conditions")],
-        [InlineKeyboardButton(text="Финансы", callback_data="pmi_finance")],
-        [InlineKeyboardButton(text="Инфраструктура", callback_data="pmi_infrastructure")]
+        [InlineKeyboardButton(text="Условия", callback_data="ivt_conditions")],
+        [InlineKeyboardButton(text="Финансы", callback_data="ivt_finance")],
+        [InlineKeyboardButton(text="Инфраструктура", callback_data="ivt_infrastructure")]
     ]
 )
 
@@ -116,7 +109,7 @@ def get_inline_keyboard(choice: str):
 def get_group_keyboard(course):
     # Заглушка для функции get_groups
     # Возвращает клавиатуру с группами для выбранного курса
-    groups = ["Группа 1", "Группа 2", "Группа 3"]  # Пример групп
+    groups = get_groups(course)  # Пример групп
     keyboard = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text=group)] for group in groups],
         resize_keyboard=True
@@ -127,32 +120,28 @@ def get_group_keyboard(course):
 @dp.message(Command("start"))
 @dp.message(lambda message: message.text.lower() in ["старт", "начать"])
 async def cmd_start(message: types.Message):
+    await message.answer("Добро пожаловать! Выберите вашу роль:", reply_markup=role_keyboard)
+
+# Обработчик команд /start, Старт, Начать
+@dp.message(Command("menu"))
+@dp.message(lambda message: message.text.lower() in ["меню", "menu"])
+async def cmd_start(message: types.Message):
     user_id = message.from_user.id
-    user = get_user("tg", user_id)  # Проверяем, авторизован ли пользователь
-    if user:
-        # Если пользователь уже авторизован, спрашиваем, хочет ли он пройти регистрацию заново
-        await message.answer("Вы уже авторизованы. Хотите пройти регистрацию заново?", reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [KeyboardButton(text="Да")],
-                [KeyboardButton(text="Нет")]
-            ],
-            resize_keyboard=True
-        ))
-    else:
-        # Если пользователь не авторизован, начинаем регистрацию
-        await message.answer("Добро пожаловать! Выберите вашу роль:", reply_markup=role_keyboard)
+    if get_user[user_id]["is_abitur"] == False:
+        await message.answer("", reply_markup=main_keyboard)
+    elif user_data[user_id]["role"] == True:
+        await message.answer("", reply_markup=direction_keyboard)
 
 # Обработчик выбора роли (студент или абитуриент)
 @dp.message(lambda message: message.text in ["Студент", "Абитуриент"])
 async def process_role(message: types.Message):
     user_id = message.from_user.id
     role = message.text.lower()
-
     if role == "студент":
-        await message.answer("Введите ваше имя:", reply_markup=None)  # Убираем клавиатуру
+        await message.answer("Введите ваше имя:", reply_markup=ReplyKeyboardRemove())  # Убираем клавиатуру
         user_data[user_id] = {"role": "student", "step": "waiting_for_name"}
     elif role == "абитуриент":
-        await message.answer("Введите ваше имя:", reply_markup=None)  # Убираем клавиатуру
+        await message.answer("Введите ваше имя:", reply_markup=ReplyKeyboardRemove())  # Убираем клавиатуру
         user_data[user_id] = {"role": "abiturient", "step": "waiting_for_name"}
 
 # Обработчик ввода имени
@@ -163,7 +152,7 @@ async def process_name(message: types.Message):
 
     if user_data[user_id]["role"] == "abiturient":
         # Для абитуриента регистрация завершена
-        create_user("tg", user_id, message.text, is_abitur=True)
+        create_user(db_code="tg", uid=user_id, name=message.text)
         await message.answer("Регистрация завершена. Вы абитуриент.", reply_markup=direction_keyboard)
         del user_data[user_id]  # Очищаем временные данные
     else:
@@ -186,7 +175,7 @@ async def process_group(message: types.Message):
     user_data[user_id]["group"] = message.text
 
     # Завершаем регистрацию студента
-    create_user("tg", user_id, user_data[user_id]["name"], user_data[user_id]["course"], user_data[user_id]["group"])
+    create_user(db_code="tg", uid=user_id, name=user_data[user_id]["name"], course=user_data[user_id]["course"], group=user_data[user_id]["group"])
     await message.answer("Регистрация завершена. Вы студент.", reply_markup=main_keyboard)
     del user_data[user_id]  # Очищаем временные данные
 
@@ -205,27 +194,27 @@ async def process_direction(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     logger.info(f"Пользователь {user_id} выбрал направление: {callback.data}")
 
-    if callback.data == "direction_pmi":
+    if callback.data == "direction_ivt":
         user_data[user_id] = {"auth": True, "role": "teacher", "direction": "ПМИ", "user_id": user_id}
-        await callback.message.answer("Выберите подкатегорию ПМИ:", reply_markup=pmi_subcategory_keyboard)
-    elif callback.data == "direction_business":
+        await callback.message.answer("Выберите подкатегорию ИВТ:", reply_markup=ivt_subcategory_keyboard)
+    elif callback.data == "direction_mpi":
         user_data[user_id] = {"auth": True, "role": "teacher", "direction": "БИЗНЕС-ИНФА", "user_id": user_id}
-        await callback.message.answer("а что нужно???")
+        await callback.message.answer("Бла бла бла")
 
     await callback.answer()
 
 # Обработчик выбора подкатегории ПМИ
-@dp.callback_query(lambda callback: callback.data.startswith("pmi_"))
+@dp.callback_query(lambda callback: callback.data.startswith("ivt_"))
 async def process_pmi_subcategory(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     logger.info(f"Пользователь {user_id} выбрал подкатегорию ПМИ: {callback.data}")
 
-    if callback.data == "pmi_conditions":
-        await callback.message.answer("Информация об условиях поступления на ПМИ:")
-    elif callback.data == "pmi_finance":
-        await callback.message.answer("Информация о финансировании на ПМИ:", reply_markup=budget_keyboard)
-    elif callback.data == "pmi_infrastructure":
-        await callback.message.answer("Информация об инфраструктуре на ПМИ:", reply_markup=infrastructure_keyboard)
+    if callback.data == "ivt_conditions":
+        await callback.message.answer("Информация об условиях поступления:")
+    elif callback.data == "ivt_finance":
+        await callback.message.answer("Информация о финансировании:", reply_markup=budget_keyboard)
+    elif callback.data == "ivt_infrastructure":
+        await callback.message.answer("Информация об инфраструктуре:", reply_markup=infrastructure_keyboard)
 
     await callback.answer()
 

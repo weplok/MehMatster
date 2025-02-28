@@ -40,11 +40,11 @@ def init(db_name):
 
     con.commit()
 
-    with open("../files/courses.tsv", "r", encoding="utf-8") as csv_file:
+    with open("functions/files/courses.tsv", "r", encoding="utf-8") as csv_file:
         reader = DictReader(csv_file, delimiter="\t")
         for row in reader:
             cur.execute("""INSERT INTO courses (course) VALUES (?)""", (row["course"],))
-    with open("../files/groups.tsv", "r", encoding="utf-8") as csv_file:
+    with open("functions/files/groups.tsv", "r", encoding="utf-8") as csv_file:
         reader = DictReader(csv_file, delimiter="\t")
         for group in list(set([row["group"] for row in reader])):
             cur.execute("""INSERT INTO groups (groupa) VALUES (?)""", (group,))

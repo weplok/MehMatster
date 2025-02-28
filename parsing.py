@@ -119,7 +119,7 @@ def applicant_count_paid_places(direction):
     ivt_dir_row = soup.find('tr', class_='row28')
     ivt_dir_quantity = ivt_dir_row.find('td', class_='column7 style10 n').text
 
-    free_places = {
+    paid_places = {
         'прикладная математика и информатика': pmi_dir_quantity,
         'фундаментальная информатика и информационные технологии': fiit_dir_quantity,
         'информатика и вычислительная техника': ivt_dir_quantity,
@@ -128,7 +128,56 @@ def applicant_count_paid_places(direction):
         'прикладная информатика': pi_dir_quantity
     }
 
-    return free_places[direction.lower()]
+    return paid_places[direction.lower()]
+
+def replace_br(el):
+    if el.name == 'br':
+        return '\n'
+    else:
+        return el.text
+
+def applicant_pass_balls(direction):
+    url = "https://sfedu.ru/www/stat_pages22.show?p=ABT/N8206"
+    page = requests.get(url=url)
+
+    soup = BeautifulSoup(page.text, "html.parser")
+    mim_dir_row = soup.find('tr', class_='row2')
+    mim_dir_balls = mim_dir_row.find('td', class_='column8 style20 s')
+    mim_dir_balls = ''.join(map(replace_br, mim_dir_balls))
+
+    pmi_dir_row = soup.find('tr', class_='row3')
+    pmi_dir_balls = pmi_dir_row.find('td', class_='column8 style20 s')
+    pmi_dir_balls = ''.join(map(replace_br, pmi_dir_balls))
+
+    fiit_dir_row = soup.find('tr', class_='row4')
+    fiit_dir_balls = fiit_dir_row.find('td', class_='column8 style20 s')
+    fiit_dir_balls = ''.join(map(replace_br, fiit_dir_balls))
+
+
+    moais_dir_row = soup.find('tr', class_='row7')
+    moais_dir_balls = moais_dir_row.find('td', class_='column8 style20 s')
+    moais_dir_balls = ''.join(map(replace_br, moais_dir_balls))
+
+    pi_dir_row = soup.find('tr', class_='row19')
+    pi_dir_balls = pi_dir_row.find('td', class_='column8 style20 s')
+    pi_dir_balls = ''.join(map(replace_br, pi_dir_balls))
+
+    ivt_dir_row = soup.find('tr', class_='row28')
+    ivt_dir_balls = ivt_dir_row.find('td', class_='column8 style20 s')
+    ivt_dir_balls = ''.join(map(replace_br, ivt_dir_balls))
+
+    pass_balls = {
+        'прикладная математика и информатика': pmi_dir_balls,
+        'фундаментальная информатика и информационные технологии': fiit_dir_balls,
+        'информатика и вычислительная техника': ivt_dir_balls,
+        "математика и механика": mim_dir_balls,
+        'математическое обеспечение и администрирование информационных систем': moais_dir_balls,
+        'прикладная информатика': pi_dir_balls
+    }
+
+    return pass_balls[direction.lower()]
+
+
 
 
 

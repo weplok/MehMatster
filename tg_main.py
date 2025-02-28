@@ -7,7 +7,6 @@ from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
 
 
-
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -71,6 +70,13 @@ direction_keyboard = InlineKeyboardMarkup(
     ]
 )
 
+choice_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="Да", callback_data="choice_yes")],
+        [InlineKeyboardButton(text="Нет", callback_data="choice_no")]
+    ]
+)
+
 # Клавиатура для выбора подкатегорий ПМИ
 ivt_subcategory_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
@@ -127,10 +133,10 @@ async def cmd_start(message: types.Message):
 @dp.message(lambda message: message.text.lower() in ["меню", "menu"])
 async def cmd_start(message: types.Message):
     user_id = message.from_user.id
-    if get_user[user_id]["is_abitur"] == False:
-        await message.answer("", reply_markup=main_keyboard)
-    elif user_data[user_id]["role"] == True:
-        await message.answer("", reply_markup=direction_keyboard)
+    if get_user("tg", user_id)["is_abitur"] == 1:
+            await message.answer("Меню с направлением:", reply_markup=direction_keyboard)
+    else:
+        await message.answer("Меню с действиями:", reply_markup=main_keyboard)
 
 # Обработчик выбора роли (студент или абитуриент)
 @dp.message(lambda message: message.text in ["Студент", "Абитуриент"])
@@ -152,8 +158,8 @@ async def process_name(message: types.Message):
 
     if user_data[user_id]["role"] == "abiturient":
         # Для абитуриента регистрация завершена
-        create_user(db_code="tg", uid=user_id, name=message.text)
-        await message.answer("Регистрация завершена. Вы абитуриент.", reply_markup=direction_keyboard)
+        create_user(db_code="tg", uid=user_id, name=message.text, course=None, group=None)
+        await message.answer("Регистрация завершена. Вы аббитурент. Вы хотите начать процесс регистарции занова?", reply_markup=choice_keyboard)
         del user_data[user_id]  # Очищаем временные данные
     else:
         # Для студента запрашиваем курс
@@ -176,17 +182,21 @@ async def process_group(message: types.Message):
 
     # Завершаем регистрацию студента
     create_user(db_code="tg", uid=user_id, name=user_data[user_id]["name"], course=user_data[user_id]["course"], group=user_data[user_id]["group"])
-    await message.answer("Регистрация завершена. Вы студент.", reply_markup=main_keyboard)
+
+    await message.answer("Регистрация завершена. Вы студент. Вы хотите начать процесс регистарции занова?", reply_markup=choice_keyboard)
     del user_data[user_id]  # Очищаем временные данные
 
 # Обработчик повторной регистрации
-@dp.message(lambda message: message.text.lower() in ["да", "нет"])
-async def process_re_registration(message: types.Message):
-    user_id = message.from_user.id
-    if message.text.lower() == "да":
-        await message.answer("Начнем регистрацию заново. Выберите вашу роль:", reply_markup=role_keyboard)
-    else:
-        await message.answer("Регистрация отменена. Продолжайте использование бота.")
+@dp.callback_query(lambda callback: callback.data.startswith("choice"))
+async def process_re_registration(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    if callback.data == "choice_yes":
+        await callback.message.answer("Начнем регистрацию заново. Выберите вашу роль:", reply_markup=role_keyboard)
+    elif callback.data == "choice_no":
+        if get_user("tg", user_id)["is_abitur"] == 1:
+            await callback.message.answer("Регистрация отменена. Продолжайте использование бота.", reply_markup=direction_keyboard)
+        else:
+            await callback.message.answer("Регистрация отменена. Продолжайте использование бота.", reply_markup=main_keyboard)
 
 # Обработчик выбора направления (для учителя)
 @dp.callback_query(lambda callback: callback.data.startswith("direction"))

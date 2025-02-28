@@ -128,9 +128,7 @@ def get_group_keyboard(course):
     return keyboard
 
 # Обработчик команд /start, Старт, Начать
-# Обработчик команд /start, Старт, Начать
 @dp.message(Command("start"))
-@dp.message(lambda message: message.text.lower() in ["старт", "начать"])
 @dp.message(lambda message: message.text.lower() in ["старт", "начать"])
 async def cmd_start(message: types.Message):
     await message.answer("Добро пожаловать! Выберите вашу роль:", reply_markup=role_keyboard)
@@ -187,9 +185,6 @@ async def process_course(message: types.Message):
 # Обработчик выбора группы (студент)
 @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_group")
 async def process_group(message: types.Message):
-# Обработчик выбора группы (студент)
-@dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_group")
-async def process_group(message: types.Message):
     user_id = message.from_user.id
     user_data[user_id]["group"] = message.text
 
@@ -211,9 +206,6 @@ async def process_re_registration(callback: types.CallbackQuery):
         else:
             await callback.message.answer("Регистрация отменена. Продолжа-йте использование бота.", reply_markup=main_keyboard)
 
-# Обработчик выбора направления (для учителя)
-@dp.callback_query(lambda callback: callback.data.startswith("direction"))
-async def process_direction(callback: types.CallbackQuery):
 # Обработчик выбора направления (для учителя)
 @dp.callback_query(lambda callback: callback.data.startswith("direction"))
 async def process_direction(callback: types.CallbackQuery):

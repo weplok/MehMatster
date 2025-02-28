@@ -54,12 +54,19 @@ course_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
+# Клавиатура для бюджета
+infrastructure_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="Общага", callback_data="inf_dorm")],
+        [InlineKeyboardButton(text="Кампус", callback_data="inf_campus")]
+    ]
+)
 
 # Клавиатура для бюджета
 budget_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text="БЮДЖЕТ", callback_data="direction_pmi")],
-        [InlineKeyboardButton(text="ПЛАТКА", callback_data="direction_business")]
+        [InlineKeyboardButton(text="Бюджет", callback_data="places_paid")],
+        [InlineKeyboardButton(text="Платка", callback_data="places_budget")]
     ]
 )
 
@@ -67,10 +74,9 @@ budget_keyboard = InlineKeyboardMarkup(
 direction_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [InlineKeyboardButton(text="ПМИ", callback_data="direction_pmi")],
-        [InlineKeyboardButton(text="БИЗНЕС-ИНФА", callback_data="direction_business")]
+        [InlineKeyboardButton(text="ИВТ", callback_data="direction_business")]
     ]
 )
-
 
 # Клавиатура для выбора подкатегорий ПМИ
 pmi_subcategory_keyboard = InlineKeyboardMarkup(
@@ -92,7 +98,6 @@ main_keyboard = ReplyKeyboardMarkup(
 )
 
 # Клавиатура для выбора расписания
-
 def get_inline_keyboard(choice: str):
     if choice == "Расписание":
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -107,7 +112,6 @@ def get_inline_keyboard(choice: str):
         ])
     return keyboard
 
-
 # Клавиатура для выбора группы (студент)
 def get_group_keyboard(course):
     # Заглушка для функции get_groups
@@ -119,14 +123,12 @@ def get_group_keyboard(course):
     )
     return keyboard
 
-
 # Обработчик команд /start, Старт, Начать
 @dp.message(Command("start"))
 @dp.message(lambda message: message.text.lower() in ["старт", "начать"])
 async def cmd_start(message: types.Message):
     user_id = message.from_user.id
     user = get_user("tg", user_id)  # Проверяем, авторизован ли пользователь
-
     if user:
         # Если пользователь уже авторизован, спрашиваем, хочет ли он пройти регистрацию заново
         await message.answer("Вы уже авторизованы. Хотите пройти регистрацию заново?", reply_markup=ReplyKeyboardMarkup(
@@ -147,10 +149,10 @@ async def process_role(message: types.Message):
     role = message.text.lower()
 
     if role == "студент":
-        await message.answer("Введите ваше имя:")
+        await message.answer("Введите ваше имя:", reply_markup=None)  # Убираем клавиатуру
         user_data[user_id] = {"role": "student", "step": "waiting_for_name"}
     elif role == "абитуриент":
-        await message.answer("Введите ваше имя:")
+        await message.answer("Введите ваше имя:", reply_markup=None)  # Убираем клавиатуру
         user_data[user_id] = {"role": "abiturient", "step": "waiting_for_name"}
 
 # Обработчик ввода имени
@@ -197,7 +199,6 @@ async def process_re_registration(message: types.Message):
     else:
         await message.answer("Регистрация отменена. Продолжайте использование бота.")
 
-
 # Обработчик выбора направления (для учителя)
 @dp.callback_query(lambda callback: callback.data.startswith("direction"))
 async def process_direction(callback: types.CallbackQuery):
@@ -209,8 +210,7 @@ async def process_direction(callback: types.CallbackQuery):
         await callback.message.answer("Выберите подкатегорию ПМИ:", reply_markup=pmi_subcategory_keyboard)
     elif callback.data == "direction_business":
         user_data[user_id] = {"auth": True, "role": "teacher", "direction": "БИЗНЕС-ИНФА", "user_id": user_id}
-        await callback.message.answer(f"Вы авторизованы как учитель, направление: {user_data[user_id]['direction']}.")
-        await callback.message.answer("Выберите действие:", reply_markup=main_keyboard)
+        await callback.message.answer("а что нужно???")
 
     await callback.answer()
 
@@ -221,11 +221,11 @@ async def process_pmi_subcategory(callback: types.CallbackQuery):
     logger.info(f"Пользователь {user_id} выбрал подкатегорию ПМИ: {callback.data}")
 
     if callback.data == "pmi_conditions":
-        await callback.message.answer("Информация об условиях поступления на ПМИ: ...")
+        await callback.message.answer("Информация об условиях поступления на ПМИ:")
     elif callback.data == "pmi_finance":
-        await callback.message.answer("Информация о финансировании на ПМИ: ...")
+        await callback.message.answer("Информация о финансировании на ПМИ:", reply_markup=budget_keyboard)
     elif callback.data == "pmi_infrastructure":
-        await callback.message.answer("Информация об инфраструктуре на ПМИ: ...")
+        await callback.message.answer("Информация об инфраструктуре на ПМИ:", reply_markup=infrastructure_keyboard)
 
     await callback.answer()
 
@@ -240,16 +240,23 @@ async def process_sch_subchoice(callback_query: types.CallbackQuery):
     elif subchoice == "schedule_week":
         await callback_query.message.answer("Расписание на неделю")
 
-
-@dp.callback_query(lambda c: c.data.startswith('news_'))
+@dp.callback_query(lambda c: c.data.startswith('places_'))
 async def process_news_subchoice(callback_query: types.CallbackQuery):
     subchoice = callback_query.data
     await callback_query.answer()
-    await callback_query.message.answer("Расписание:")
-    if subchoice == "news_last":
-        await callback_query.message.answer("Новости недели")
-    elif subchoice == "news_vk_url":
-        await callback_query.message.answer("ссылка на вк")
+    if subchoice == "places_paid":
+        await callback_query.message.answer("Информация о платных местах...")
+    elif subchoice == "places_budget":
+        await callback_query.message.answer("Информация о бюджетных местах...")
+
+@dp.callback_query(lambda c: c.data.startswith('inf_'))
+async def process_news_subchoice(callback_query: types.CallbackQuery):
+    subchoice = callback_query.data
+    await callback_query.answer()
+    if subchoice == "inf_dorm":
+        await callback_query.message.answer("Информация о общаге...")
+    elif subchoice == "inf_campus":
+        await callback_query.message.answer("Информация о кампусе...")
 
 # Обработчик действий для авторизованного пользователя
 @dp.message()

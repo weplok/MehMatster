@@ -1,4 +1,3 @@
-
 import requests
 from bs4 import BeautifulSoup
 
@@ -14,49 +13,49 @@ def student_get_news():
 
     soup = BeautifulSoup(page.text, "html.parser")
     all_student_news = soup.findAll('div', class_='index-news-list__wrapper')
+    # print(all_student_news)
     title = soup.find('div', class_='h3')
-    # link_class = soup.find('li', class_='index-news-list__more')
-    # # link = link_class.findAll('a')['href']
-    # link = link_class.findAll('a')[0]['href']
-    # link_title = link_class.findAll('a')[0].text
-    #
-    # title = all_student_news.find('div', class_='h3')
+    link_class = soup.find('li', class_='index-news-list__more')
+    link = link_class.findAll('a')[0]['href']
     filter_student_news = []
     for data in all_student_news:
         if data.find('li') is not None:
+            # print(data.text)
             filter_student_news.append(data.text)
     # filter_student_news.append(link)
+    filter_student_news = ''.join(filter_student_news)
+    filter_student_news = filter_student_news.split('\n')
+    res_student_news = []
+    for new in filter_student_news:
+        if new != '' and new != 'Больше новостей':
+             res_student_news.append('👀 ->' + new + '\n\n')
 
-    return ''.join(filter_student_news)
+    print(res_student_news)
+    return ''.join(res_student_news)+'Чтобы узнать больше новостей, нажимай на Пресс-Центр ЮФУ 👆'
 
 
-def teacher_info(teacher_name):
+def student_get_news_mehmat():
     headers = {
         "user": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
     }
 
-    url = "https://sfedu.ru/www/stat_pages22.show?p=ELs/sotr/D&x=ELS/2000000000000"
+    url = "https://mmcs.sfedu.ru/"
     page = requests.get(url=url, headers=headers)
 
     soup = BeautifulSoup(page.text, "html.parser")
-    all_student_workers = soup.findAll('div', class_='content_wrapper')
-    filter_workers = []
-    for data in all_student_workers:
-        if data.find('tr') is not None:
-            filter_workers.append(data.text)
-
-    if teacher_name not in filter_workers:
-        return 'Такого сотрудника нет'
-    else:
-        url = "https://sfedu.ru/www/stat_pages22.show?p=ELs/sotr/D&x=ELS/2000000000000"
-        page = requests.get(url=url)
-
-        soup = BeautifulSoup(page.text, "html.parser")
-        all_student_workers = soup.findAll('div', class_='content_wrapper')
-        filter_workers = []
-        for data in all_student_workers:
-            if data.find('tr') is not None:
-                filter_workers.append(data.text)
+    news_cards = soup.findAll('div', class_='news_item_f')
+    # print(news_cards)
+    filter_news_cards = []
+    for data in news_cards:
+        # print(data)
+        # print('------------')
+        data_title = data.find('h2', class_='article_title')
+        data_date = data.find('div', class_='newsitem_tools')
+        data_main_info = data.find('div', class_='newsitem_text')
+        if data_title is not None and data_date is not None and data_main_info is not None:
+            filter_news_cards.append('📝' + (''.join(data_title.text.split('\n'))) + '\n' + '🕑' + ''.join(data_date.text.split('\n'))
+                                     + '\n' + ''.join(data_main_info.text.split('\n')) + '\n\n\n')
+    return "".join(filter_news_cards)
 
 
 # функция возвращает количество бюджетных мест исходя из запроса пользователя

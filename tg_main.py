@@ -65,8 +65,8 @@ course_keyboard = ReplyKeyboardMarkup(
 # Клавиатура для бюджета
 budget_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text="БЮДЖЕТ", callback_data="direction_pmi")],
-        [InlineKeyboardButton(text="ПЛАТКА", callback_data="direction_business")]
+        [InlineKeyboardButton(text="бюджетные места", callback_data="direction_pmi")],
+        [InlineKeyboardButton(text="платные места", callback_data="direction_business")]
     ]
 )
 

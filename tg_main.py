@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 API_TOKEN = '7362003844:AAFKaYk5S6DFnzyDFOauySExqOHQL29v-z4'
 
 # Инициализация бота и диспетчера
+# Инициализация бота и диспетчера
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
 
@@ -93,7 +94,9 @@ main_keyboard = ReplyKeyboardMarkup(
         [KeyboardButton(text="Расписание"), KeyboardButton(text="Событие")],
         [KeyboardButton(text="Инфа про препода"), KeyboardButton(text="Навигация")],
         [KeyboardButton(text="Учебные ресурсы")]
+        [KeyboardButton(text="Учебные ресурсы")]
     ],
+    resize_keyboard=True
     resize_keyboard=True
 )
 
@@ -125,7 +128,9 @@ def get_group_keyboard(course):
     return keyboard
 
 # Обработчик команд /start, Старт, Начать
+# Обработчик команд /start, Старт, Начать
 @dp.message(Command("start"))
+@dp.message(lambda message: message.text.lower() in ["старт", "начать"])
 @dp.message(lambda message: message.text.lower() in ["старт", "начать"])
 async def cmd_start(message: types.Message):
     await message.answer("Добро пожаловать! Выберите вашу роль:", reply_markup=role_keyboard)
@@ -175,7 +180,13 @@ async def process_course(message: types.Message):
     user_data[user_id]["course"] = message.text
     user_data[user_id]["step"] = "waiting_for_group"
     await message.answer("Выберите вашу группу:", reply_markup=get_group_keyboard(message.text))
+    user_data[user_id]["course"] = message.text
+    user_data[user_id]["step"] = "waiting_for_group"
+    await message.answer("Выберите вашу группу:", reply_markup=get_group_keyboard(message.text))
 
+# Обработчик выбора группы (студент)
+@dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_group")
+async def process_group(message: types.Message):
 # Обработчик выбора группы (студент)
 @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_group")
 async def process_group(message: types.Message):
@@ -203,7 +214,11 @@ async def process_re_registration(callback: types.CallbackQuery):
 # Обработчик выбора направления (для учителя)
 @dp.callback_query(lambda callback: callback.data.startswith("direction"))
 async def process_direction(callback: types.CallbackQuery):
+# Обработчик выбора направления (для учителя)
+@dp.callback_query(lambda callback: callback.data.startswith("direction"))
+async def process_direction(callback: types.CallbackQuery):
     user_id = callback.from_user.id
+    logger.info(f"Пользователь {user_id} выбрал направление: {callback.data}")
     logger.info(f"Пользователь {user_id} выбрал направление: {callback.data}")
 
     if callback.data == "direction_ivt":
@@ -266,12 +281,16 @@ async def process_news_subchoice(callback_query: types.CallbackQuery):
 # Обработчик действий для авторизованного пользователя
 @dp.message()
 async def handle_actions(message: types.Message):
+async def handle_actions(message: types.Message):
     user_id = message.from_user.id
+    logger.info(f"Пользователь {user_id} выбрал действие: {message.text}")
     logger.info(f"Пользователь {user_id} выбрал действие: {message.text}")
 
     if message.text == "Расписание":
         await message.answer("Выберите период:", reply_markup=get_inline_keyboard(message.text))
+        await message.answer("Выберите период:", reply_markup=get_inline_keyboard(message.text))
     elif message.text == "Событие":
+        await message.answer("Выбертите новость", reply_markup=get_inline_keyboard(message.text))
         await message.answer("Выбертите новость", reply_markup=get_inline_keyboard(message.text))
     elif message.text == "Инфа про препода":
         await message.answer("Здесь будет информация о преподавателе.")
@@ -279,9 +298,11 @@ async def handle_actions(message: types.Message):
         await message.answer("Здесь будет навигация.")
     elif message.text == "Учебные ресурсы":
         await message.answer("Здесь учебные ресурсы.")
+        await message.answer("Здесь учебные ресурсы.")
     else:
         await message.answer("Используйте кнопки для взаимодействия.")
 
+# Запуск бота
 # Запуск бота
 async def main():
     await dp.start_polling(bot)

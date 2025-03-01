@@ -14,16 +14,19 @@ import datetime as dt
 
 import pandas
 import requests
+import os
 
-with open("files/courses.tsv", "r", encoding="utf-8") as csv_file:
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+with open(os.path.join(BASE_DIR, 'files', "courses.tsv"), "r", encoding="utf-8") as csv_file:
     reader = csv.DictReader(csv_file, delimiter="\t")
     course_urls = dict()
     for row in reader:
         course_urls[row["course"]] = row["id"]
 
-groups_urls = pandas.read_csv("files/groups.tsv", delimiter="\t")
+groups_urls = pandas.read_csv(os.path.join(BASE_DIR, 'files', "groups.tsv"), delimiter="\t")
 
-teachers_urls = pandas.read_csv("files/teachers.tsv", delimiter="\t")
+teachers_urls = pandas.read_csv(os.path.join(BASE_DIR, 'files', "teachers.tsv"), delimiter="\t")
 
 
 def get_groups(course: str) -> list:

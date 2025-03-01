@@ -8,16 +8,11 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
 from aiogram.exceptions import TelegramAPIError
-import asyncio
-import logging
-from parsing import student_get_news, applicant_count_free_places, applicant_count_paid_places, student_get_news_mehmat
+from config import API_TOKEN
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Токен бота
-API_TOKEN = '7310603202:AAGC1StqzHRenL-w8ouhneno3G5FRHfl6vM'
 
 # Инициализация бота и диспетчера
 bot = Bot(token=API_TOKEN)

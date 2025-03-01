@@ -23,7 +23,7 @@ with open("functions/files/courses.tsv", "r", encoding="utf-8") as csv_file:
 
 groups_urls = pandas.read_csv("functions/files/groups.tsv", delimiter="\t")
 
-teachers_urls = pandas.read_csv("files/teachers.tsv", delimiter="\t")
+teachers_urls = pandas.read_csv("functions/files/teachers.tsv", delimiter="\t")
 
 
 def get_groups(course: str) -> list:
@@ -45,7 +45,6 @@ def get_teachers(pre_teacher: str) -> list:
     :param pre_teacher: строка от пользователя
     :return: список учителей, ФИО которых включает строку от пользователя
     """
-
     pre_teacher = pre_teacher.lower()
     teachers = teachers_urls[teachers_urls.teacher.str.contains(pre_teacher, case=False, na=False)]
     teachers = list(teachers.teacher.tolist())

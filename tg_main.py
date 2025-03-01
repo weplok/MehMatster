@@ -8,6 +8,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
 from aiogram.exceptions import TelegramAPIError
+from parsing import student_get_news, student_get_news_mehmat, bachalor_applicant_count_free_places, bachalor_applicant_count_paid_places, bachalor_applicant_pass_balls, master_applicant_count_free_places, master_applicant_count_paid_places, master_applicant_pass_balls
+
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +24,9 @@ dp = Dispatcher()
 
 # Хранение данных пользователя (временное, вместо БД)
 user_data = {}
+
+student_news = student_get_news()
+student_news_mehmath = student_get_news_mehmat()
 
 # Клавиатура для выбора роли (студент или абитуриент)
 role_keyboard = ReplyKeyboardMarkup(
@@ -83,7 +88,7 @@ choice_keyboard = InlineKeyboardMarkup(
     ]
 )
 
-# Клавиатура для выбора подкатегорий ПМИ
+# Клавиатура для выбора подкатегорий направлений бакалавриата
 ivt_subcategory_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [InlineKeyboardButton(text="Условия", callback_data="ivt_conditions")],
@@ -91,6 +96,7 @@ ivt_subcategory_keyboard = InlineKeyboardMarkup(
         [InlineKeyboardButton(text="Инфраструктура", callback_data="ivt_infrastructure")]
     ]
 )
+
 
 # Клавиатура для авторизованного пользователя
 main_keyboard = ReplyKeyboardMarkup(
@@ -137,8 +143,9 @@ def get_inline_keyboard(choice: str):
         ])
     elif choice == "Событие":
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Последняя новость", callback_data="news_last")],
-            [InlineKeyboardButton(text="Ссылка на вк", callback_data="news_vk_url")]
+            [InlineKeyboardButton(text="Последние новости ЮФУ", callback_data="news_last")],
+            [InlineKeyboardButton(text="Последние новости Мехмата", callback_data="news_last_mehmath")],
+            [InlineKeyboardButton(text="Пресс-Центр ЮФУ", callback_data="news_vk_url")]
         ])
     return keyboard
 
@@ -222,7 +229,6 @@ async def process_name(message: types.Message):
         if user_data[user_id]["role"] == "abiturient":
             create_user(db_code="tg", uid=user_id, name=message.text, course=None, group=None)
             await message.answer("Регистрация завершена. Вы абитуриент. Вы хотите начать процесс регистрации занова?", reply_markup=choice_keyboard)
-            del user_data[user_id]
         elif user_data[user_id]["role"] == "student":
             user_data[user_id]["step"] = "waiting_for_course"
             await message.answer("Выберите ваш курс:", reply_markup=course_keyboard)
@@ -250,7 +256,6 @@ async def process_group(message: types.Message):
         user_data[user_id]["group"] = message.text
         create_user(db_code="tg", uid=user_id, name=user_data[user_id]["name"], course=user_data[user_id]["course"], group=user_data[user_id]["group"])
         await message.answer("Регистрация завершена. Вы студент. Вы хотите начать процесс регистрации занова?", reply_markup=choice_keyboard)
-        del user_data[user_id]
     except Exception as e:
         logger.error(f"Ошибка при выборе группы: {e}")
         await message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
@@ -305,7 +310,6 @@ async def process_pmi_subcategory(callback: types.CallbackQuery):
 @dp.callback_query(lambda c: c.data.startswith('schedule_'))
 async def process_sch_subchoice(callback_query: types.CallbackQuery):
     try:
-
         user_id = callback_query.from_user.id
         person = get_user("tg", user_id)
         subchoice = callback_query.data
@@ -368,6 +372,20 @@ async def process_news_subchoice(callback_query: types.CallbackQuery):
         logger.error(f"Ошибка при выборе инфраструктуры: {e}")
         await callback_query.message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
 
+@dp.callback_query(lambda c: c.data.startswith('news_'))
+async def process_news_subchoice(callback_query: types.CallbackQuery):
+    subchoice = callback_query.data
+    await callback_query.answer()
+    if subchoice == "news_last":
+        await callback_query.message.answer("Последние новости ЮФУ:")
+        await callback_query.message.answer(student_news)
+    if subchoice == "news_last_mehmath":
+        await callback_query.message.answer("Последние новости Мехмата:")
+        await callback_query.message.answer(student_news_mehmath)
+    elif subchoice == "news_vk_url":
+        await callback_query.message.answer("Больше новостей:")
+        await callback_query.message.answer('<a href="https://sfedu.ru/press-center/newspage/1">''😽👉тык👈''</a>',parse_mode="HTML")
+
 @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_teacher_fio")
 async def process_teacher_fio(message: types.Message):
     try:
@@ -414,11 +432,14 @@ async def handle_actions(message: types.Message):
             if message.text == "Кафедры":
                 await message.answer("Кафедры...")
             elif message.text == "Бакалавр направление":
+                user_data[user_id]["step"] = "бакалавр"
                 await message.answer("Бакалавр направления", reply_markup=direction_keyboard)
             elif message.text == "Магистраль направление":
-                await message.answer("Магистраль направление...")
+                user_data[user_id]["step"] = "магистраль"
+                await message.answer("Магистраль направление:", reply_markup=direction_keyboard)
             elif message.text == "Аспирантура направление":
-                await message.answer("Аспирантура направление...")
+                user_data[user_id] = "аспирантура"
+                await message.answer("Аспирантура направление:", reply_markup=direction_keyboard)
         else:
             if message.text == "Расписание":
                 await message.answer("Выберите период:", reply_markup=get_inline_keyboard(message.text))

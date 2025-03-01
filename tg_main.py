@@ -9,6 +9,10 @@ from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
 from aiogram.exceptions import TelegramAPIError
 from config import API_TOKEN
+from parsing import base_info_master, base_info_bachalor, student_get_news, student_get_news_mehmat
+
+student_news = student_get_news()
+student_mehmath_news = student_get_news_mehmat()
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -54,22 +58,55 @@ infrastructure_keyboard = InlineKeyboardMarkup(
     ]
 )
 
+keyboard_labels = {
+    "direction_math": "Математика и механика",
+    "direction_infmath": "Прикладная математика и информатика",
+    "direction_inf": "Фундаментальная информатика и информационные технологии",
+    "direction_ped": "Педагогическое образование: Математика",
+}
+
+keyboard_labels_master = {
+    "master_fiit": "Фундаментальная математика, механика и математическое моделирование",
+    "master_cm": "Computational modeling in technology and finance",
+    "master_msd": "Modern software development",
+    "master_rmp": "Разработка мобильных приложений и компьютерных игр",
+    "master_ii": "Искусственный интеллект: математические модели и прикладные решения",
+    "master_mitou": "Модели и информационные технологии организационного управления",
+    "master_irpi": "Математика и информатика в образовании",
+    "master_mio": "Модели и информационные технологии организационного управления",
+
+}
+
 # Клавиатура для выбора направления (учитель)
 direction_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text="Математика, механика и математическое моделирование", callback_data="direction_math")],
-        [InlineKeyboardButton(text="Прикладная математика и информатика", callback_data="direction_infmath")],
-        [InlineKeyboardButton(text="Фундаментальная информатика и информационные технологии, очное обучение", callback_data="direction_inf")],
-        [InlineKeyboardButton(text="Педагогическое образование. Профиль «Математика»", callback_data="direction_ped")]
+        [InlineKeyboardButton(text=keyboard_labels["direction_math"], callback_data="direction_math")],
+        [InlineKeyboardButton(text=keyboard_labels["direction_infmath"], callback_data="direction_infmath")],
+        [InlineKeyboardButton(text=keyboard_labels["direction_inf"], callback_data="direction_inf")],
+        [InlineKeyboardButton(text=keyboard_labels["direction_ped"], callback_data="direction_ped")]
+    ]
+)
+
+#магистратура кнопки программ
+master_keyboard_dir = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text=keyboard_labels_master['master_fiit'], callback_data='master_fiit')],
+        [InlineKeyboardButton(text=keyboard_labels_master['master_cm'], callback_data='master_cm')],
+        [InlineKeyboardButton(text=keyboard_labels_master['master_msd'], callback_data='master_msd')],
+        [InlineKeyboardButton(text=keyboard_labels_master['master_rmp'], callback_data='master_rmp')],
+        [InlineKeyboardButton(text=keyboard_labels_master['master_ii'], callback_data='master_ii')],
+        [InlineKeyboardButton(text=keyboard_labels_master['master_mitou'], callback_data='master_mitou')],
+        [InlineKeyboardButton(text=keyboard_labels_master['master_irpi'], callback_data='master_irpi')],
+        [InlineKeyboardButton(text=keyboard_labels_master['master_mio'], callback_data='master_mio')]
     ]
 )
 
 teacher_direction_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Кафедры")],
-        [KeyboardButton(text="Бакалавр направление")],
-        [KeyboardButton(text="Магистраль направление")],
-        [KeyboardButton(text="Аспирантура направление")],
+        [KeyboardButton(text="Бакалавриат направления")],
+        [KeyboardButton(text="Магистратура направления")],
+        [KeyboardButton(text="Аспирантура направления")],
     ],
     resize_keyboard=True
 )
@@ -81,21 +118,21 @@ choice_keyboard = InlineKeyboardMarkup(
     ]
 )
 
-# Клавиатура для выбора подкатегорий ПМИ
-ivt_subcategory_keyboard = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [InlineKeyboardButton(text="Условия", callback_data="ivt_conditions")],
-        [InlineKeyboardButton(text="Финансы", callback_data="ivt_finance")],
-        [InlineKeyboardButton(text="Инфраструктура", callback_data="ivt_infrastructure")]
-    ]
-)
+
+
+# # Клавиатура для выбора подкатегорий ПМИ
+# ivt_subcategory_keyboard = InlineKeyboardMarkup(
+#     inline_keyboard=[
+#         [InlineKeyboardButton(text="Финансы", callback_data="ivt_finance")],
+#         [InlineKeyboardButton(text="Инфраструктура", callback_data="ivt_infrastructure")]
+#     ]
+# )
 
 # Клавиатура для авторизованного пользователя
 main_keyboard = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="Расписание"), KeyboardButton(text="Событие")],
-        [KeyboardButton(text="Инфа про препода"), KeyboardButton(text="Навигация")],
-        [KeyboardButton(text="Учебные ресурсы")]
+        [KeyboardButton(text="Мое расписание 📆"), KeyboardButton(text="События 🎭")],
+        [KeyboardButton(text="Информация о преподавателях 👩‍🏫"), KeyboardButton(text="Навигация 🌏")],
     ],
     resize_keyboard=True
 )
@@ -126,19 +163,38 @@ def format_schedule(schedule):
 
 # Клавиатура для выбора расписания
 def get_inline_keyboard(choice: str):
-    if choice == "Расписание":
+    if choice == "Мое расписание 📆":
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="Сегодня", callback_data="schedule_today")],
             [InlineKeyboardButton(text="Завтра", callback_data="schedule_tomorrow")],
             [InlineKeyboardButton(text="Послезавтра", callback_data="schedule_atomorrow")],
             [InlineKeyboardButton(text="Неделя", callback_data="schedule_week")]
         ])
-    elif choice == "Событие":
+    elif choice == "События 🎭":
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Последняя новость", callback_data="news_last")],
-            [InlineKeyboardButton(text="Ссылка на вк", callback_data="news_vk_url")]
+            [InlineKeyboardButton(text="Последние новости ЮФУ", callback_data="news_last")],
+            [InlineKeyboardButton(text="Последние новости Мехмата", callback_data="news_last_mehmath")],
+            [InlineKeyboardButton(text="Пресс-Центр ЮФУ", callback_data="news_url")]
         ])
+
     return keyboard
+
+
+@dp.callback_query(lambda c: c.data.startswith('news_'))
+async def process_news_subchoice(callback_query: types.CallbackQuery):
+    subchoice = callback_query.data
+    await callback_query.answer()
+    if subchoice == "news_last":
+        await callback_query.message.answer("Последние новости ЮФУ:")
+        await callback_query.message.answer(student_news)
+    if subchoice == "news_last_mehmath":
+        await callback_query.message.answer("Последние новости Мехмата:")
+        await callback_query.message.answer(student_mehmath_news)
+    elif subchoice == "news_url":
+        await callback_query.message.answer("Больше новостей:")
+        await callback_query.message.answer('<a href="https://sfedu.ru/press-center/newspage/1">''😽👉тык👈''</a>',parse_mode="HTML")
+
+
 
 # Клавиатура для выбора группы (студент)
 def get_group_keyboard(course):
@@ -171,7 +227,7 @@ def get_teacher_keyboard(name):
 @dp.message(lambda message: message.text.lower() in ["старт", "начать"])
 async def cmd_start(message: types.Message):
     try:
-        await message.answer("Добро пожаловать! Выберите вашу роль:", reply_markup=role_keyboard)
+        await message.answer("Добро пожаловать!\nМеня зовут кот-МехМатстер 😸\nЯ помогу вам с поступлением или учебой в нашем прекрасном университете ЮФУ города Ростова-на-Дону 🌃\n\nДля начала работы выберите роль:", reply_markup=role_keyboard)
     except TelegramAPIError as e:
         logger.error(f"Ошибка при отправке сообщения: {e}")
 
@@ -183,7 +239,7 @@ async def cmd_menu(message: types.Message):
         user_id = message.from_user.id
         user = get_user("tg", user_id)
         if user is None:
-            await message.answer("Пожалуйста, завершите регистрацию.")
+            await message.answer("Пожалуйста, завершите регистрацию")
             return
 
         if user["is_abitur"] == 1:
@@ -192,7 +248,7 @@ async def cmd_menu(message: types.Message):
             await message.answer("Меню с действиями:", reply_markup=main_keyboard)
     except Exception as e:
         logger.error(f"Ошибка в обработчике меню: {e}")
-        await message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
+        await message.answer("Произошла ошибка⛔ Пожалуйста, попробуйте позже")
 
 # Обработчик выбора роли (студент или абитуриент)
 @dp.message(lambda message: message.text in ["Студент", "Абитуриент"])
@@ -208,7 +264,7 @@ async def process_role(message: types.Message):
             user_data[user_id] = {"role": "abiturient", "step": "waiting_for_name"}
     except Exception as e:
         logger.error(f"Ошибка при выборе роли: {e}")
-        await message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
+        await message.answer("Произошла ошибка⛔ Пожалуйста, попробуйте позже.")
 
 # Обработчик ввода имени
 @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_name")
@@ -219,14 +275,14 @@ async def process_name(message: types.Message):
 
         if user_data[user_id]["role"] == "abiturient":
             create_user(db_code="tg", uid=user_id, name=message.text, course=None, group=None)
-            await message.answer("Регистрация завершена. Вы абитуриент. Вы хотите начать процесс регистрации занова?", reply_markup=choice_keyboard)
+            await message.answer("Поздравляю! 🐱\nРегистрация завершена. \nВы абитуриент 🧑‍💼 \n\nХотите начать процесс регистрации заново?", reply_markup=choice_keyboard)
             del user_data[user_id]
         elif user_data[user_id]["role"] == "student":
             user_data[user_id]["step"] = "waiting_for_course"
             await message.answer("Выберите ваш курс:", reply_markup=course_keyboard)
     except Exception as e:
         logger.error(f"Ошибка при вводе имени: {e}")
-        await message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
+        await message.answer("Произошла ошибка⛔ Пожалуйста, попробуйте позже")
 
 # Обработчик выбора курса (студент)
 @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_course")
@@ -238,7 +294,7 @@ async def process_course(message: types.Message):
         await message.answer("Выберите вашу группу:", reply_markup=get_group_keyboard(message.text))
     except Exception as e:
         logger.error(f"Ошибка при выборе курса: {e}")
-        await message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
+        await message.answer("Произошла ошибка⛔ Пожалуйста, попробуйте позже.")
 
 # Обработчик выбора группы (студент)
 @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_group")
@@ -247,11 +303,11 @@ async def process_group(message: types.Message):
         user_id = message.from_user.id
         user_data[user_id]["group"] = message.text
         create_user(db_code="tg", uid=user_id, name=user_data[user_id]["name"], course=user_data[user_id]["course"], group=user_data[user_id]["group"])
-        await message.answer("Регистрация завершена. Вы студент. Вы хотите начать процесс регистрации занова?", reply_markup=choice_keyboard)
+        await message.answer("Поздравляю! 🐱\nРегистрация завершена. \nВы студент 👨‍🎓 \n\nХотите начать процесс регистрации заново?", reply_markup=choice_keyboard)
         del user_data[user_id]
     except Exception as e:
         logger.error(f"Ошибка при выборе группы: {e}")
-        await message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
+        await message.answer("Произошла ошибка⛔ Пожалуйста, попробуйте позже.")
 
 # Обработчик повторной регистрации
 @dp.callback_query(lambda callback: callback.data.startswith("choice"))
@@ -263,41 +319,52 @@ async def process_re_registration(callback: types.CallbackQuery):
         elif callback.data == "choice_no":
             user = get_user("tg", user_id)
             if user["is_abitur"] == 1:
-                await callback.message.answer("Регистрация отменена. Продолжайте использование бота.", reply_markup=teacher_direction_keyboard)
+                await callback.message.answer("Регистрация отменена. Можете продолжить использование бота 🐈", reply_markup=teacher_direction_keyboard)
             else:
-                await callback.message.answer("Регистрация отменена. Продолжайте использование бота.", reply_markup=main_keyboard)
+                await callback.message.answer("Регистрация отменена. Можете продолжить использование бота 🐈", reply_markup=main_keyboard)
     except Exception as e:
         logger.error(f"Ошибка при повторной регистрации: {e}")
         await callback.message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
 
-# Обработчик выбора направления
+# Обработчик выбора направления бакалавриата
 @dp.callback_query(lambda callback: callback.data.startswith("direction"))
 async def process_direction(callback: types.CallbackQuery):
     try:
         user_id = callback.from_user.id
-        logger.info(f"Пользователь {user_id} выбрал направление: {callback.data}")
-        await callback.message.answer(f"Выберите подкатегорию:", reply_markup=ivt_subcategory_keyboard)
-        await callback.answer()
+        label = keyboard_labels[callback.data]
+        logger.info(f"Пользователь {user_id} выбрал направление: {label}")
+        await callback.message.answer(base_info_bachalor(label))
     except Exception as e:
         logger.error(f"Ошибка при выборе направления: {e}")
-        await callback.message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
+        await callback.message.answer("Произошла ошибка⛔ Пожалуйста, попробуйте позже.")
 
-# Обработчик выбора подкатегории ПМИ
-@dp.callback_query(lambda callback: callback.data.startswith("ivt_"))
-async def process_pmi_subcategory(callback: types.CallbackQuery):
+
+
+@dp.callback_query(lambda callback: callback.data.startswith("master"))
+async def process_master(callback: types.CallbackQuery):
     try:
         user_id = callback.from_user.id
-        logger.info(f"Пользователь {user_id} выбрал подкатегорию ПМИ: {callback.data}")
-        if callback.data == "ivt_conditions":
-            await callback.message.answer("Информация об условиях поступления:")
-        elif callback.data == "ivt_finance":
-            await callback.message.answer("Информация о финансировании...")
-        elif callback.data == "ivt_infrastructure":
-            await callback.message.answer("Информация об инфраструктуре:", reply_markup=infrastructure_keyboard)
-        await callback.answer()
+        label = keyboard_labels_master[callback.data]
+        logger.info(f"Пользователь {user_id} выбрал направление: {label}")
+        await callback.message.answer(base_info_master(label))
     except Exception as e:
-        logger.error(f"Ошибка при выборе подкатегории ПМИ: {e}")
-        await callback.message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
+        logger.error(f"Ошибка при выборе направления: {e}")
+        await callback.message.answer("Произошла ошибка⛔ Пожалуйста, попробуйте позже.")
+
+# # Обработчик выбора подкатегории ПМИ
+# @dp.callback_query(lambda callback: callback.data.startswith("ivt_"))
+# async def process_pmi_subcategory(callback: types.CallbackQuery):
+#     try:
+#         user_id = callback.from_user.id
+#         logger.info(f"Пользователь {user_id} выбрал подкатегорию ПМИ: {callback.data}")
+#         if callback.data == "ivt_finance":
+#             await callback.message.answer("Информация о финансировании...")
+#         elif callback.data == "ivt_infrastructure":
+#             await callback.message.answer("Информация об инфраструктуре:", reply_markup=infrastructure_keyboard)
+#         await callback.answer()
+#     except Exception as e:
+#         logger.error(f"Ошибка при выборе подкатегории ПМИ: {e}")
+#         await callback.message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
 
 # Обработчик выбора расписания
 @dp.callback_query(lambda c: c.data.startswith('schedule_'))
@@ -337,34 +404,34 @@ async def process_sch_subchoice(callback_query: types.CallbackQuery):
         await callback_query.message.answer("Выходной")
 
 # Обработчик выбора бюджета
-@dp.callback_query(lambda c: c.data.startswith('places_'))
-async def process_news_subchoice(callback_query: types.CallbackQuery):
-    try:
-        subchoice = callback_query.data
-        await callback_query.answer()
-        if subchoice == "places_paid":
-            await callback_query.message.answer("Информация о платных местах...")
-        elif subchoice == "places_budget":
-            await callback_query.message.answer("Информация о бюджетных местах...")
-        elif subchoice == "places_score":
-            await callback_query.message.answer("Информация о проходных баллах...")
-    except Exception as e:
-        logger.error(f"Ошибка при выборе бюджета: {e}")
-        await callback_query.message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
+# @dp.callback_query(lambda c: c.data.startswith('places_'))
+# async def process_news_subchoice(callback_query: types.CallbackQuery):
+#     try:
+#         subchoice = callback_query.data
+#         await callback_query.answer()
+#         if subchoice == "places_paid":
+#             await callback_query.message.answer("Информация о платных местах...")
+#         elif subchoice == "places_budget":
+#             await callback_query.message.answer("Информация о бюджетных местах...")
+#         elif subchoice == "places_score":
+#             await callback_query.message.answer("Информация о проходных баллах...")
+#     except Exception as e:
+#         logger.error(f"Ошибка при выборе бюджета: {e}")
+#         await callback_query.message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
 
-# Обработчик выбора инфраструктуры
-@dp.callback_query(lambda c: c.data.startswith('inf_'))
-async def process_news_subchoice(callback_query: types.CallbackQuery):
-    try:
-        subchoice = callback_query.data
-        await callback_query.answer()
-        if subchoice == "inf_dorm":
-            await callback_query.message.answer("Информация о общаге...")
-        elif subchoice == "inf_campus":
-            await callback_query.message.answer("Информация о кампусе...")
-    except Exception as e:
-        logger.error(f"Ошибка при выборе инфраструктуры: {e}")
-        await callback_query.message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
+# # Обработчик выбора инфраструктуры
+# @dp.callback_query(lambda c: c.data.startswith('inf_'))
+# async def process_news_subchoice(callback_query: types.CallbackQuery):
+#     try:
+#         subchoice = callback_query.data
+#         await callback_query.answer()
+#         if subchoice == "inf_dorm":
+#             await callback_query.message.answer("Информация о общаге...")
+#         elif subchoice == "inf_campus":
+#             await callback_query.message.answer("Информация о кампусе...")
+#     except Exception as e:
+#         logger.error(f"Ошибка при выборе инфраструктуры: {e}")
+#         await callback_query.message.answer("Произошла ошибка ⛔ Пожалуйста, попробуйте позже.")
 
 @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_teacher_fio")
 async def process_teacher_fio(message: types.Message):
@@ -375,7 +442,7 @@ async def process_teacher_fio(message: types.Message):
         await message.answer(f"Ваш учитель:", reply_markup=get_teacher_keyboard(fio))
     except Exception as e:
         logger.error(f"Ошибка при вводе ФИО учителя: {e}")
-        await message.answer("У вашего учителя нет занятий.", reply_markup=ReplyKeyboardRemove)
+        await message.answer("У вашего учителя нет занятий", reply_markup=ReplyKeyboardRemove)
 
 @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_teacher_schedule")
 async def process_teacher_schedule(message: types.Message):
@@ -394,7 +461,7 @@ async def process_teacher_schedule(message: types.Message):
             await message.answer(f"{format_schedule(schedule_data)}", reply_markup=ReplyKeyboardRemove())
     except Exception as e:
         logger.error(f"Ошибка при получении расписания учителя: {e}")
-        await message.answer("У вашего учителя нет занятий.",  reply_markup=ReplyKeyboardRemove())
+        await message.answer("У вашего учителя нет занятий",  reply_markup=ReplyKeyboardRemove())
 
 # Обработчик действий для авторизованного пользователя
 @dp.message()
@@ -405,36 +472,35 @@ async def handle_actions(message: types.Message):
 
         user = get_user("tg", user_id)
         if user is None:
-            await message.answer("Пожалуйста, завершите регистрацию.")
+            await message.answer("Пожалуйста, завершите регистрацию")
             return
 
         if user["is_abitur"] == 1:
             if message.text == "Кафедры":
                 await message.answer("Кафедры...")
-            elif message.text == "Бакалавр направление":
-                await message.answer("Бакалавр направления", reply_markup=direction_keyboard)
-            elif message.text == "Магистраль направление":
-                await message.answer("Магистраль направление...")
-            elif message.text == "Аспирантура направление":
-                await message.answer("Аспирантура направление...")
+            elif message.text == "Бакалавриат направления":
+                await message.answer("Бакалавриат направления", reply_markup=direction_keyboard)
+            elif message.text == "Магистратура направления":
+                await message.answer("Магистратура направления", reply_markup=master_keyboard_dir)
+            elif message.text == "Аспирантура направления":
+                await message.answer("Математика и механика \n\n Математическое моделирование, численные методы и комплексы программ. Математические модели естественных наук "
+                                     "\n\n Управление в организационных системах \n\n Математическое и программное обеспечение вычислительных систем, комплексов и компьютерных сетей")
         else:
-            if message.text == "Расписание":
+            if message.text == "Мое расписание 📆":
                 await message.answer("Выберите период:", reply_markup=get_inline_keyboard(message.text))
-            elif message.text == "Событие":
-                await message.answer("Выберите новость", reply_markup=get_inline_keyboard(message.text))
-            elif message.text == "Инфа про препода":
+            elif message.text == "События 🎭":
+                await message.answer("Какие новости вас интересуют? 🐱📸", reply_markup=get_inline_keyboard(message.text))
+            elif message.text == "Информация о преподавателях 👩‍🏫":
                 await message.answer("Пожалуйста, введите учителя:")
                 user_data[user_id] = {"step": "waiting_for_teacher_fio"}
                 return
-            elif message.text == "Навигация":
+            elif message.text == "Навигация 🌏":
                 await message.answer("Здесь будет навигация.")
-            elif message.text == "Учебные ресурсы":
-                await message.answer("Здесь учебные ресурсы.")
             else:
                 await message.answer("Используйте кнопки для взаимодействия.")
     except Exception as e:
         logger.error(f"Ошибка в обработчике действий: {e}")
-        await message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
+        await message.answer("Произошла ошибка ⛔ Пожалуйста, попробуйте позже.")
 
 # Запуск бота
 async def main():

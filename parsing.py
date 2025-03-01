@@ -30,7 +30,6 @@ def student_get_news():
         if new != '' and new != 'Больше новостей':
              res_student_news.append('👀 ->' + new + '\n\n')
 
-    print(res_student_news)
     return ''.join(res_student_news)+'Чтобы узнать больше новостей, нажимай на Пресс-Центр ЮФУ 👆'
 
 
@@ -84,7 +83,7 @@ def bachalor_applicant_count_free_places(direction):
         'педагогическое образование: математика': math_teach_dir_quantity,
     }
 
-    return free_places[direction.lower()]
+    return f'💼 Количество бюджетных мест на направлении {direction}: ' + free_places[direction.lower()]
 
 
 
@@ -114,7 +113,7 @@ def bachalor_applicant_count_paid_places(direction):
         'педагогическое образование: математика': math_teach_dir_quantity,
     }
 
-    return paid_places[direction.lower()]
+    return '💵 Количество платных мест на направлении: ' + paid_places[direction.lower()]
 
 
 
@@ -152,7 +151,11 @@ def bachalor_applicant_pass_balls(direction):
         'педагогическое образование: математика': math_teach_dir_balls,
     }
 
-    return pass_balls[direction.lower()]
+    return '📚 Проходные баллы: \n' + pass_balls[direction.lower()]
+
+
+def base_info_bachalor(direction):
+    return bachalor_applicant_count_free_places(direction) + '\n' + bachalor_applicant_count_paid_places(direction) + '\n' + bachalor_applicant_pass_balls(direction)
 
 
 
@@ -201,10 +204,9 @@ def master_applicant_count_free_places(direction):
 
     }
 
-    return free_places[direction.lower()]
+    return f'💼 Количество бюджетных мест на направлении {direction}: ' + free_places[direction.lower()]
 
 
-print(master_applicant_count_free_places('математика и информатика в образовании'))
 
 
 def master_applicant_count_paid_places(direction):
@@ -250,7 +252,7 @@ def master_applicant_count_paid_places(direction):
 
     }
 
-    return paid_places[direction.lower()]
+    return '💵 Количество платных мест на направлении: ' + paid_places[direction.lower()]
 
 
 
@@ -297,8 +299,11 @@ def master_applicant_pass_balls(direction):
 
     }
 
-    return pass_balls[direction.lower()]
+    return f'📖✏️ Вступительный экзамен: ' + pass_balls[direction.lower()]
 
+
+def base_info_master(direction):
+    return master_applicant_count_free_places(direction) + '\n' + master_applicant_count_paid_places(direction) + '\n' + master_applicant_pass_balls(direction)
 
 
 

@@ -305,21 +305,38 @@ async def process_pmi_subcategory(callback: types.CallbackQuery):
 @dp.callback_query(lambda c: c.data.startswith('schedule_'))
 async def process_sch_subchoice(callback_query: types.CallbackQuery):
     try:
+
         user_id = callback_query.from_user.id
         person = get_user("tg", user_id)
         subchoice = callback_query.data
         await callback_query.answer()
         if subchoice == "schedule_today":
-            await callback_query.message.answer(f"{pprint.pformat(get_schedule(person['course'], person['group'], 'today'))}")
+            schedule_text = f"{get_schedule(person['course'], person['group'], 'today')}"
+            start_index = schedule_text.find("{")
+            end_index = schedule_text.rfind("}") + 1
+            schedule_data = ast.literal_eval(schedule_text[start_index:end_index])
+            await callback_query.message.answer(f"{format_schedule(schedule_data)}")
         elif subchoice == "schedule_tomorrow":
-            await callback_query.message.answer(f"{pprint.pformat(get_schedule(person['course'], person['group'], 'tomorrow'))}")
+            schedule_text = f"{get_schedule(person['course'], person['group'], 'tomorrow')}"
+            start_index = schedule_text.find("{")
+            end_index = schedule_text.rfind("}") + 1
+            schedule_data = ast.literal_eval(schedule_text[start_index:end_index])
+            await callback_query.message.answer(f"{format_schedule(schedule_data)}")
         elif subchoice == "schedule_week":
-            await callback_query.message.answer(f"{pprint.pformat(get_schedule(person['course'], person['group'], 'week'))}")
+            schedule_text = f"{get_schedule(person['course'], person['group'], 'week')}"
+            start_index = schedule_text.find("{")
+            end_index = schedule_text.rfind("}") + 1
+            schedule_data = ast.literal_eval(schedule_text[start_index:end_index])
+            await callback_query.message.answer(f"{format_schedule(schedule_data)}")
         elif subchoice == "schedule_atomorrow":
-            await callback_query.message.answer(f"{pprint.pformat(get_schedule(person['course'], person['group'], 'atomorrow'))}")
+            schedule_text = f"{get_schedule(person['course'], person['group'], 'atomorrow')}"
+            start_index = schedule_text.find("{")
+            end_index = schedule_text.rfind("}") + 1
+            schedule_data = ast.literal_eval(schedule_text[start_index:end_index])
+            await callback_query.message.answer(f"{format_schedule(schedule_data)}")
     except Exception as e:
         logger.error(f"Ошибка при выборе расписания: {e}")
-        await callback_query.message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
+        await callback_query.message.answer("Выходной")
 
 # Обработчик выбора бюджета
 @dp.callback_query(lambda c: c.data.startswith('places_'))
@@ -360,7 +377,7 @@ async def process_teacher_fio(message: types.Message):
         await message.answer(f"Ваш учитель:", reply_markup=get_teacher_keyboard(fio))
     except Exception as e:
         logger.error(f"Ошибка при вводе ФИО учителя: {e}")
-        await message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
+        await message.answer("У вашего учителя нет занятий.", reply_markup=ReplyKeyboardRemove)
 
 @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_teacher_schedule")
 async def process_teacher_schedule(message: types.Message):
@@ -375,10 +392,11 @@ async def process_teacher_schedule(message: types.Message):
 
         schedule_data = ast.literal_eval(schedule_text[start_index:end_index])
         await message.answer(f"Расписание учителя:")
-        await message.answer(f"{format_schedule(schedule_data)}", reply_markup=ReplyKeyboardRemove())
+        if format_schedule(schedule_data):
+            await message.answer(f"{format_schedule(schedule_data)}", reply_markup=ReplyKeyboardRemove())
     except Exception as e:
         logger.error(f"Ошибка при получении расписания учителя: {e}")
-        await message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
+        await message.answer("У вашего учителя нет занятий.",  reply_markup=ReplyKeyboardRemove())
 
 # Обработчик действий для авторизованного пользователя
 @dp.message()

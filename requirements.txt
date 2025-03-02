@@ -1,6 +1,7 @@
 vk_api
 aiogram
-pysqlite3
 pandas
 requests
 python-dotenv
+bs4
+openai

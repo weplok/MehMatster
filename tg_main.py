@@ -107,6 +107,7 @@ teacher_direction_keyboard = ReplyKeyboardMarkup(
         [KeyboardButton(text="Бакалавриат направления")],
         [KeyboardButton(text="Магистратура направления")],
         [KeyboardButton(text="Аспирантура направления")],
+        [KeyboardButton(text="В начало <-")],
     ],
     resize_keyboard=True
 )
@@ -133,6 +134,7 @@ main_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Мое расписание 📆"), KeyboardButton(text="События 🎭")],
         [KeyboardButton(text="Информация о преподавателях 👩‍🏫"), KeyboardButton(text="Навигация 🌏")],
+        [KeyboardButton(text="В начало <-")],
     ],
     resize_keyboard=True
 )
@@ -224,7 +226,7 @@ def get_teacher_keyboard(name):
 
 # Обработчик команд /start, Старт, Начать
 @dp.message(Command("start"))
-@dp.message(lambda message: message.text.lower() in ["старт", "начать"])
+@dp.message(lambda message: message.text.lower() in ["старт", "начать", "в начало <-"])
 async def cmd_start(message: types.Message):
     try:
         await bot.send_sticker(message.from_user.id, sticker='CAACAgIAAxkBAAEN7PRnw5QEfyJq8OiXvkgYCUAYK_g-QgACEmMAAvlZAUpPtMZ1_L5TTzYE')
@@ -473,6 +475,7 @@ async def process_teacher_schedule(message: types.Message):
 async def handle_actions(message: types.Message):
     try:
         user_id = message.from_user.id
+        chat_id = message.chat.id
         logger.info(f"Пользователь {user_id} выбрал действие: {message.text}")
 
         user = get_user("tg", user_id)

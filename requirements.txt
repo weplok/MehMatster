@@ -1,0 +1,5 @@
+vk_api
+aiogram
+sqlite3
+pandas
+requests

@@ -41,9 +41,16 @@ roles = {
     True: "Абитуриент"
 }
 
+users_threads = dict()
+
 
 def gpt_ans(user_text, user):
-    thread = client.beta.threads.create()
+    uid = user["id"]
+    if uid in users_threads.keys():
+        thread = users_threads[uid]
+    else:
+        thread = client.beta.threads.create()
+        users_threads[uid] = thread
 
     message = client.beta.threads.messages.create(
         thread_id=thread.id,

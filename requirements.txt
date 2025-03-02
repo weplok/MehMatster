@@ -3,3 +3,5 @@ aiogram
 pandas
 requests
 python-dotenv
+bs4
+openai

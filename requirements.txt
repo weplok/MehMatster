@@ -1,6 +1,6 @@
 vk_api
 aiogram
-sqlite3
+pysqlite3
 pandas
 requests
 python-dotenv

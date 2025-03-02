@@ -64,6 +64,3 @@ def gpt_ans(user_text, user):
         return messages.data[0].content[0].text.value
     else:
         return str(run.status)
-
-
-print(gpt_ans("Где находится Мехмат?", {'name': "Максим", "is_abitur": True}))

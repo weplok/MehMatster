@@ -4,9 +4,10 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.utils import get_random_id
 
+from MehMatster.parsing import student_get_news, student_get_news_mehmat
 from functions import db_funcs, schedule
 from functions.db_funcs import get_user, create_user
-from functions.schedule import get_groups, get_schedule
+from functions.schedule import get_groups, get_schedule, get_teachers, get_teacher_schedule
 import ast
 
 user_states = {}
@@ -14,8 +15,17 @@ user_states = {}
 
 def format_schedule(schedule):
     result = []
+    days_dict = {
+        "0": "Понедельник",
+        "1": "Вторник",
+        "2": "Среда",
+        "3": "Четверг",
+        "4": "Пятница",
+        "5": "Суббота",
+        "6": "Воскресенье",
+    }
     for day, lessons in schedule.items():
-        result.append(f"📅 День недели: {day}")
+        result.append(f"📅 День недели: {days_dict[day]}")
         for lesson in lessons:
             result.append(
                 f"  🕒 Время: {lesson['start_time']} - {lesson['end_time']}\n"
@@ -133,7 +143,7 @@ def register(user_id, text):
 
 
 def show_menu_student(user_id):
-    keyboard = create_keyboard(['Расписание', 'События', 'Информация о преподавателях', 'Навигация', 'Учебные ресурсы'])
+    keyboard = create_keyboard(['Расписание', 'События', 'Информация о преподавателях', 'Навигация'], one_time=True)
     send_message(user_id, 'Меню для студентов:', keyboard)
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
@@ -143,14 +153,45 @@ def show_menu_student(user_id):
             if text == "Расписание":
                 schedule_vk_bot(user_id)
 
-            elif text == "Преподователи":
-                pass
+            elif text == "Информация о преподавателях":
+                teachher_schedule_vk_bot(user_id)
+
+            elif text == "События":
+                ivent(user_id)
 
 
 def show_menu_applicant(user_id):
-    keyboard = create_keyboard(['Условия поступления', 'Финансы', 'Инфраструктура'])
+    keyboard = create_keyboard(['Условия поступления', 'Финансы', 'Инфраструктура'], one_time=True)
     send_message(user_id, 'Меню для абитуриентов:', keyboard)
 
+def show_menu_teacher(user_id):
+    keyboard = create_keyboard(['Расписание', 'Информация о студентах', 'Навигация', 'Учебные ресурсы'], one_time=True)
+    send_message(user_id, 'Меню для преподавателей:', keyboard)
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            user_id = event.obj.message['from_id']
+            text = event.obj.message['text']
+
+            if text == "Расписание":
+                teacher_schedule_vk_bot(user_id)  # Функция для расписания преподавателя
+            elif text == "Информация о студентах":
+                # Здесь можно добавить логику для работы со студентами
+                send_message(user_id, 'Функция в разработке.')
+
+def ivent(user_id):
+    keyboard = create_keyboard(['Новости МЕХМАТА', 'Новости ЮФУ', "Меню"], one_time=False)
+    send_message(user_id, 'Выберите новость:', keyboard)
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            user_id = event.obj.message['from_id']
+            text = event.obj.message['text']
+
+            if text == "Новости МЕХМАТА":
+                send_message(user_id, student_get_news_mehmat())
+            elif text == "Новости ЮФУ":
+                send_message(user_id, student_get_news())
+            elif text == "Меню":
+                show_menu_student(user_id)
 
 def schedule_vk_bot(user_id):
     # Получаем данные пользователя
@@ -225,6 +266,112 @@ def schedule_vk_bot(user_id):
         print(e)
         show_menu_student(user_id)
 
+def teacher_schedule_vk_bot(user_id):
+    send_message(user_id, 'Выберите период:', create_keyboard(['Сегодня', 'Завтра', 'Послезавтра', 'Неделя', 'Меню']))
+    try:
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                user_id = event.obj.message['from_id']
+                text = event.obj.message['text']
+
+                if text == 'Сегодня':
+                    schedule_1 = str(get_teacher_schedule(user_id, 'today'))
+                    start_index = schedule_1.find("{")
+                    end_index = schedule_1.rfind("}") + 1
+                    schedule_data = ast.literal_eval(schedule_1[start_index:end_index])
+
+                    if schedule_1 == {}:
+                        send_message(user_id, 'На сегодня расписания нет.')
+                    else:
+                        send_message(user_id, format_schedule(schedule_data))
+
+                elif text == 'Завтра':
+                    schedule_1 = str(get_teacher_schedule(user_id, 'tomorrow'))
+                    start_index = schedule_1.find("{")
+                    end_index = schedule_1.rfind("}") + 1
+                    schedule_data = ast.literal_eval(schedule_1[start_index:end_index])
+
+                    if schedule_1 == {}:
+                        send_message(user_id, 'На завтра расписания нет.')
+                    else:
+                        send_message(user_id, format_schedule(schedule_data))
+
+                elif text == 'Послезавтра':
+                    schedule_1 = str(get_teacher_schedule(user_id, 'atomorrow'))
+                    start_index = schedule_1.find("{")
+                    end_index = schedule_1.rfind("}") + 1
+                    schedule_data = ast.literal_eval(schedule_1[start_index:end_index])
+
+                    if schedule_1 == {}:
+                        send_message(user_id, 'На послезавтра расписания нет.')
+                    else:
+                        send_message(user_id, format_schedule(schedule_data))
+
+                elif text == 'Неделя':
+                    schedule_1 = str(get_teacher_schedule(user_id, 'week'))
+                    start_index = schedule_1.find("{")
+                    end_index = schedule_1.rfind("}") + 1
+                    schedule_data = ast.literal_eval(schedule_1[start_index:end_index])
+
+                    if schedule_1 == {}:
+                        send_message(user_id, 'На неделю расписания нет.')
+                    else:
+                        send_message(user_id, format_schedule(schedule_data))
+
+                elif text.lower() == '/menu' or text.lower() == 'menu' or text.lower() == 'меню':
+                    show_menu_teacher(user_id)
+
+                else:
+                    send_message(user_id, 'Пожалуйста, выберите период из предложенных вариантов.')
+    except Exception as e:
+        print(e)
+        show_menu_teacher(user_id)
+
+def teachher_schedule_vk_bot(user_id):
+    send_message(user_id, 'Выберите период:', create_keyboard(['Сегодня', 'Завтра', 'Послезавтра', 'Неделя', 'Меню']))
+    try:
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                user_id = event.obj.message['from_id']
+                text = event.obj.message['text']
+
+                # Получаем данные преподавателя
+                teacher_data = get_user("vk", user_id)
+                if not teacher_data:
+                    send_message(user_id, 'Ошибка: Данные преподавателя не найдены. Пройдите регистрацию заново.')
+                    return
+
+                teacher_name = teacher_data['name']  # Имя преподавателя
+
+                if text == 'Сегодня':
+                    schedule_data = get_teacher_schedule(teacher_name, 'today')
+                elif text == 'Завтра':
+                    schedule_data = get_teacher_schedule(teacher_name, 'tomorrow')
+                elif text == 'Послезавтра':
+                    schedule_data = get_teacher_schedule(teacher_name, 'atomorrow')
+                elif text == 'Неделя':
+                    schedule_data = get_teacher_schedule(teacher_name, 'week')
+                elif text.lower() in ['/menu', 'menu', 'меню']:
+                    show_menu_teacher(user_id)
+                    return
+                else:
+                    send_message(user_id, 'Пожалуйста, выберите период из предложенных вариантов.')
+                    continue
+
+                # Проверяем, есть ли данные в расписании
+                if not schedule_data:  # Если расписание пустое
+                    send_message(user_id, 'На выбранный период расписания нет.')
+                else:
+                    # Форматируем и отправляем расписание
+                    formatted_schedule = format_schedule(schedule_data)
+                    send_message(user_id, formatted_schedule)
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        show_menu_teacher(user_id)
+        send_message(user_id, 'Произошла ошибка. Пожалуйста, попробуйте позже.')
+
+
 # Основной цикл бота
 for event in longpoll.listen():
     if event.type == VkBotEventType.MESSAGE_NEW:
@@ -268,12 +415,12 @@ for event in longpoll.listen():
             register(user_id, text)
 
         # Обработка команды меню
-        elif text.lower() == '/menu' or text.lower() == 'menu' or text.lower() == 'меню':
+        elif text.lower() in ['/menu', 'menu', 'меню']:
             # Показываем меню в зависимости от роли
-            user_data = get_user("vk", user_id)  # Получаем данные пользователя
-            if user_data is None:
+            user_data = get_user("vk", user_id)
+            if not user_data:
                 send_message(user_id, 'Ошибка: Пользователь не найден. Пройдите регистрацию заново.')
             elif user_data['is_abitur']:  # Если пользователь — абитуриент
                 show_menu_applicant(user_id)
-            else:  # Если пользователь — студент
-                show_menu_student(user_id)
+            else:  # Если пользователь — студент или преподаватель
+                show_menu_student(user_id)  # Пока что используем меню для студентов

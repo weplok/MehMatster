@@ -10,6 +10,8 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 from aiogram.exceptions import TelegramAPIError
 from config import API_TOKEN
 from parsing import base_info_master, base_info_bachalor, student_get_news, student_get_news_mehmat
+from LLM.gpt_funcs import gpt_ans
+
 
 student_news = student_get_news()
 student_mehmath_news = student_get_news_mehmat()
@@ -234,6 +236,27 @@ async def cmd_start(message: types.Message):
     except TelegramAPIError as e:
         logger.error(f"Ошибка при отправке сообщения: {e}")
 
+@dp.message(Command("?"))
+@dp.message(lambda message: message.text.lower() in ["?", "вопросы"])
+async def cmd_start(message: types.Message):
+    try:
+        await message.answer("Задайте свой вопрос?")
+        user_message = message.text
+        user_id = message.from_user.id
+        user_data[user_id]= {"step": "waiting_for_quest"}
+
+    except TelegramAPIError as e:
+        logger.error(f"Ошибка при отправке сообщения: {e}")
+        await message.answer("Задайте вопрос еще раз.")
+
+@dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_quest")
+async def process_name(message: types.Message):
+    user_id = message.from_user.id
+    quest = message.text
+
+    await message.answer(gpt_ans(quest, get_user("tg", user_id)))
+
+
 # Обработчик команд /menu, Меню
 @dp.message(Command("menu"))
 @dp.message(lambda message: message.text.lower() in ["меню", "menu"])
@@ -377,7 +400,6 @@ async def process_master(callback: types.CallbackQuery):
 @dp.callback_query(lambda c: c.data.startswith('schedule_'))
 async def process_sch_subchoice(callback_query: types.CallbackQuery):
     try:
-
         user_id = callback_query.from_user.id
         person = get_user("tg", user_id)
         subchoice = callback_query.data
@@ -485,7 +507,7 @@ async def handle_actions(message: types.Message):
 
         if user["is_abitur"] == 1:
             if message.text == "Кафедры":
-                await message.answer("Кафедры...")
+                await message.answer(gpt_ans("Какие есть кафедры?", get_user("tg", user_id)))
             elif message.text == "Бакалавриат направления":
                 await message.answer("Бакалавриат направления", reply_markup=direction_keyboard)
             elif message.text == "Магистратура направления":

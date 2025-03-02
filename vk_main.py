@@ -4,7 +4,7 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.utils import get_random_id
 
-from MehMatster.parsing import student_get_news, student_get_news_mehmat
+from parsing import student_get_news, student_get_news_mehmat
 from functions import db_funcs, schedule
 from functions.db_funcs import get_user, create_user
 from functions.schedule import get_groups, get_schedule, get_teachers, get_teacher_schedule

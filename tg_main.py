@@ -227,6 +227,7 @@ def get_teacher_keyboard(name):
 @dp.message(lambda message: message.text.lower() in ["старт", "начать"])
 async def cmd_start(message: types.Message):
     try:
+        await bot.send_sticker(message.from_user.id, sticker='CAACAgIAAxkBAAEN7PRnw5QEfyJq8OiXvkgYCUAYK_g-QgACEmMAAvlZAUpPtMZ1_L5TTzYE')
         await message.answer("Добро пожаловать!\nМеня зовут кот-МехМатстер 😸\nЯ помогу вам с поступлением или учебой в нашем прекрасном университете ЮФУ города Ростова-на-Дону 🌃\n\nДля начала работы выберите роль:", reply_markup=role_keyboard)
     except TelegramAPIError as e:
         logger.error(f"Ошибка при отправке сообщения: {e}")
@@ -333,7 +334,10 @@ async def process_direction(callback: types.CallbackQuery):
         user_id = callback.from_user.id
         label = keyboard_labels[callback.data]
         logger.info(f"Пользователь {user_id} выбрал направление: {label}")
+        await bot.send_sticker(user_id, sticker='CAACAgIAAxkBAAEN7PZnw5QSHc42ibnJokgy3QFClBcKZgACBGUAAsZRGEoi2-q_Kk1_lzYE')
+
         await callback.message.answer(base_info_bachalor(label))
+
     except Exception as e:
         logger.error(f"Ошибка при выборе направления: {e}")
         await callback.message.answer("Произошла ошибка⛔ Пожалуйста, попробуйте позже.")
@@ -346,6 +350,7 @@ async def process_master(callback: types.CallbackQuery):
         user_id = callback.from_user.id
         label = keyboard_labels_master[callback.data]
         logger.info(f"Пользователь {user_id} выбрал направление: {label}")
+        await bot.send_sticker(user_id, sticker='CAACAgIAAxkBAAEN7PZnw5QSHc42ibnJokgy3QFClBcKZgACBGUAAsZRGEoi2-q_Kk1_lzYE')
         await callback.message.answer(base_info_master(label))
     except Exception as e:
         logger.error(f"Ошибка при выборе направления: {e}")

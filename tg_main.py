@@ -55,8 +55,9 @@ course_keyboard = ReplyKeyboardMarkup(
 # Клавиатура для бюджета
 infrastructure_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text="Общага", callback_data="inf_dorm")],
-        [InlineKeyboardButton(text="Кампус", callback_data="inf_campus")]
+        [InlineKeyboardButton(text="Общага на ул. Зорге 21", callback_data="nav_21")],
+        [InlineKeyboardButton(text="Общага на ул. Зорге 28", callback_data="nav_28")],
+        [InlineKeyboardButton(text="Кампус", callback_data="nav_campus")]
     ]
 )
 
@@ -335,6 +336,25 @@ async def process_group(message: types.Message):
         logger.error(f"Ошибка при выборе группы: {e}")
         await message.answer("Произошла ошибка⛔ Пожалуйста, попробуйте позже.")
 
+@dp.callback_query(lambda callback: callback.data.startswith("nav_"))
+async def process_direction(callback: types.CallbackQuery):
+    try:
+        images = ["https://imgur.com/a/oanUdfd.png", "https://imgur.com/a/nUi4hmJ.png",
+                  "https://imgur.com/a/jYFm862.png", "https://imgur.com/a/1410HTN.png",
+                  "https://imgur.com/a/RmMmlFt.png"]
+        if callback.data == "nav_21":
+            await callback.message.answer("https://imgur.com/a/oanUdfd.png")
+            await callback.message.answer("https://imgur.com/a/nUi4hmJ.png")
+        elif callback.data == "nav_28":
+            await callback.message.answer("https://imgur.com/a/jYFm862.png")
+        elif callback.data == "nav_campus":
+            await callback.message.answer("https://imgur.com/a/1410HTN.png")
+            await callback.message.answer("https://imgur.com/a/RmMmlFt.png")
+
+    except Exception as e:
+        logger.error(f"Ошибка при выборе направления: {e}")
+        await callback.message.answer("Произошла ошибка⛔ Пожалуйста, попробуйте позже.")
+
 # Обработчик повторной регистрации
 @dp.callback_query(lambda callback: callback.data.startswith("choice"))
 async def process_re_registration(callback: types.CallbackQuery):
@@ -525,7 +545,8 @@ async def handle_actions(message: types.Message):
                 user_data[user_id] = {"step": "waiting_for_teacher_fio"}
                 return
             elif message.text == "Навигация 🌏":
-                await message.answer("Здесь будет навигация.")
+                await message.answer("Выберите навигацию:", reply_markup=infrastructure_keyboard)
+
             else:
                 await message.answer("Используйте кнопки для взаимодействия.")
     except Exception as e:

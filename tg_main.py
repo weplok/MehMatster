@@ -254,7 +254,7 @@ async def cmd_start(message: types.Message):
 async def process_name(message: types.Message):
     user_id = message.from_user.id
     quest = message.text
-
+    await bot.send_sticker(user_id, sticker='CAACAgIAAxkBAAEN7PZnw5QSHc42ibnJokgy3QFClBcKZgACBGUAAsZRGEoi2-q_Kk1_lzYE')
     await message.answer(gpt_ans(quest, get_user("tg", user_id)))
 
 
@@ -527,6 +527,7 @@ async def handle_actions(message: types.Message):
 
         if user["is_abitur"] == 1:
             if message.text == "Кафедры":
+                await bot.send_sticker(user_id, sticker='CAACAgIAAxkBAAEN7PZnw5QSHc42ibnJokgy3QFClBcKZgACBGUAAsZRGEoi2-q_Kk1_lzYE')
                 await message.answer(gpt_ans("Какие есть кафедры?", get_user("tg", user_id)))
             elif message.text == "Бакалавриат направления":
                 await message.answer("Бакалавриат направления", reply_markup=direction_keyboard)

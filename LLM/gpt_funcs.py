@@ -5,7 +5,7 @@ import json
 
 # Загрузка переменных окружения и получение API-ключа
 load_dotenv()
-YANDEX_API_KEY = os.getenv("YANDEX_API_KEY")
+YANDEX_API_KEY = os.getenv("YANDEX_API_KEY") #В файл .env указать переменную YANDEX_API_KEY
 
 # Проверка наличия API-ключа
 if not YANDEX_API_KEY:

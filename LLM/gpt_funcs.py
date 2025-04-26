@@ -1,50 +1,97 @@
 import os
-
 from dotenv import load_dotenv
-from openai import OpenAI
+import requests
+import json
 
+# Загрузка переменных окружения и получение API-ключа
 load_dotenv()
-OPENAI_KEY = os.getenv("OPENAI_KEY")
+YANDEX_API_KEY = os.getenv("YANDEX_API_KEY")
 
-client = OpenAI(
-    api_key=OPENAI_KEY,
-    base_url="https://api.proxyapi.ru/openai/v1"
-)
+# Проверка наличия API-ключа
+if not YANDEX_API_KEY:
+    raise ValueError("Необходимо установить переменную окружения YANDEX_API_KEY")
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(base_dir, 'data', "knowledge_base.txt")
-file = client.files.create(
-    file=open(file_path, "rb"),
-    purpose="assistants"
-)
 
-vector_file = client.beta.vector_stores.create(
-    name="vector_store",
-    file_ids=[file.id]
-)
+class BotAssistant:  #Создаем класс, который будет хранить историю разговора
+    def __init__(self):
+        self.history = [] #Инициализируем список для хранения истории
 
-assistant = client.beta.assistants.create(
-    name="Мехматстер - Дружелюбный помощник Мехмата ЮФУ",
-    instructions="Роль – дружелюбный и энергичный помощник для студентов и абитуриентов университета ЮФУ. Задача – отвечать на вопросы студентов и абитуриентов, которые есть в данной базе знаний. Главное – выражаться не бюрократически, а на ровне, как человек к человеку.",
-    tools=[{"type": "file_search"}],
-    tool_resources={
-        "file_search": {
-            "vector_store_ids": [vector_file.id]
+    def ai_ansver(self, text):
+        self.history.append("user:" + text) #Добавляем вопрос пользователя в историю
+
+        prompt = {
+            "modelUri": "gpt://ИДЕНТИФИКАТОР КЛЮЧА/yandexgpt-lite",
+            "completionOptions": {
+                "stream": False,
+                "temperature": 0.3,
+                "maxTokens": 2000
+            },
+            "messages": [
+                {
+                    "role": "system",
+                    "text": """Ты - Мехматстер, дружелюбный и энергичный помощник для студентов и абитуриентов Мехмата ЮФУ. Твоя задача - отвечать на вопросы об университете, учебном процессе, поступлении и т.д.  Используй только информацию из предоставленной базы знаний.
+
+    Старайся отвечать простым и понятным языком, как если бы ты разговаривал со своим другом. Избегай бюрократических формулировок.
+
+    Примеры:
+    Пользователь: Какие вступительные экзамены нужны на Мехмат?
+    Мехматстер: Для поступления на Мехмат ЮФУ тебе понадобятся результаты ЕГЭ по математике, русскому языку и физике (или информатике).
+
+    Пользователь: Где находится деканат?
+    Мехматстер: Деканат Мехмата находится в главном корпусе ЮФУ, кабинет 205.
+
+    Если в базе знаний нет информации на вопрос, ответь: К сожалению, я не знаю ответа на этот вопрос. Попробуйте обратиться 
+    в деканат или приемную комиссию."""
+                },
+                {
+                    "role": "user",
+                    "text": "\n".join(self.history) + '\n---------------\n' + str(text)
+                }
+            ]
+        }  # шаблон запроса для нейросети
+        url = 'https://<бакет>.storage.yandexcloud.net/<ключ>' #ИЗМЕНИТЬ
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Api-Key {YANDEX_API_KEY}" #Используем API-KEY из переменной окружения
         }
-    },
-    model="gpt-4o-mini"
-)
-assistant_id = assistant.id
 
-roles = {
-    False: "Студент",
-    True: "Абитуриент"
-}
+        try:
+            response = requests.post(url, headers=headers, json=prompt)  # отправка запроса и получение ответа
+            response.raise_for_status() # Проверяем, что запрос выполнен успешно (код 200)
+            data = response.json()  # Преобразуем JSON-ответ в словарь
 
-users_threads = dict()
+            result = data['result']['alternatives'][0]['message']['text']
+            self.history.append('system:' + result) #Добавляем ответ в историю
+            return result
+
+        except requests.exceptions.RequestException as e:
+            print(f"Ошибка при запросе к YandexGPT: {e}")
+            return "Произошла ошибка при получении ответа от YandexGPT."
+        except (KeyError, IndexError) as e:
+            print(f"Ошибка при разборе ответа YandexGPT: {e}")
+            return "Произошла ошибка при обработке ответа от YandexGPT."
+        except Exception as e:
+            print(f"Произошла непредвиденная ошибка: {e}")
+            return "Произошла непредвиденная ошибка."
+
+# ------ Пример использования ------
+
+# Вместо этого используйте класс BotAssistant в своем коде
 
 
-def gpt_ans(user_text, user):
+# Пример использования
+if __name__ == '__main__':
+    assistant = BotAssistant()
+    user_text = "Какие направления подготовки есть на мехмате?"
+    response = assistant.ai_ansver(user_text)
+    print(response)
+
+    user_text = "А какие проходные баллы?"
+    response = assistant.ai_ansver(user_text)
+    print(response)
+
+
+"""def gpt_ans(user_text, user):
     uid = user["id"]
     if uid in users_threads.keys():
         thread = users_threads[uid]
@@ -70,4 +117,4 @@ def gpt_ans(user_text, user):
         )
         return messages.data[0].content[0].text.value
     else:
-        return str(run.status)
+        return str(run.status)"""

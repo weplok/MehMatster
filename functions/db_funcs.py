@@ -2,6 +2,17 @@ import sqlite3
 import os
 
 
+def get_db_path(db_code):
+    db_file_name = f"{db_code}.sqlite3"
+    hosting_db_path = os.path.join('/data', db_file_name)
+    if os.path.isfile(hosting_db_path):
+        return hosting_db_path
+    else:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        db_path = os.path.join(base_dir, 'db', db_file_name)
+        return db_path
+
+
 def create_user(db_code: str, uid: int, name: str, course: str = None, group: str = None) -> bool:
     """
     :param db_code: vk - БД юзеров ВК, tg - БД юзеров ТГ
@@ -14,8 +25,7 @@ def create_user(db_code: str, uid: int, name: str, course: str = None, group: st
 
     if db_code not in ["vk", "tg"]:
         return False
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    db_path = os.path.join(base_dir, 'db', f"{db_code}.sqlite3")
+    db_path = get_db_path(db_code)
     con = sqlite3.connect(db_path)
     cur = con.cursor()
 
@@ -51,8 +61,7 @@ def get_user(db_code: str, uid: int) -> dict:
     user_dict = {}
     if db_code not in ["vk", "tg"]:
         return user_dict
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    db_path = os.path.join(base_dir, 'db', f"{db_code}.sqlite3")
+    db_path = get_db_path(db_code)
     con = sqlite3.connect(db_path)
     cur = con.cursor()
 

@@ -1,17 +1,33 @@
+import importlib.util
+import os
+
 import asyncio
 import logging
 import pprint
 import ast
+
 from functions.db_funcs import create_user, get_user
 from functions.schedule import get_groups, get_schedule, get_teachers, get_teacher_schedule
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
 from aiogram.exceptions import TelegramAPIError
-from config import API_TOKEN
 from parsing import base_info_master, base_info_bachalor, student_get_news, student_get_news_mehmat
 # from LLM.gpt_funcs import gpt_ans
 
+hosting_config_path = "/data/config.py"
+if os.path.isfile(hosting_config_path):
+    # для загрузки конфига на хостинге
+    print(f"{hosting_config_path} существует.")
+    spec = importlib.util.spec_from_file_location(
+        "mod", hosting_config_path)
+    config = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config)
+elif os.path.isfile("config.py"):
+    print("config.py существует.")
+    import config
+else:
+    print("ни /data/config.py, ни config.py не существуют.")
 
 student_news = student_get_news()
 student_mehmath_news = student_get_news_mehmat()
@@ -21,7 +37,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Инициализация бота и диспетчера
-bot = Bot(token=API_TOKEN)
+bot = Bot(token=config.API_TOKEN)
 dp = Dispatcher()
 
 # Хранение данных пользователя (временное, вместо БД)
@@ -554,9 +570,11 @@ async def handle_actions(message: types.Message):
         logger.error(f"Ошибка в обработчике действий: {e}")
         await message.answer("Произошла ошибка ⛔ Пожалуйста, попробуйте позже.")
 
+
 # Запуск бота
 async def main():
     await dp.start_polling(bot)
+
 
 if __name__ == '__main__':
     asyncio.run(main())

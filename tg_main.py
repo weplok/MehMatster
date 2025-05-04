@@ -10,7 +10,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 from aiogram.exceptions import TelegramAPIError
 from config import API_TOKEN
 from parsing import base_info_master, base_info_bachalor, student_get_news, student_get_news_mehmat
-from LLM.gpt_funcs import gpt_ans
+# from LLM.gpt_funcs import gpt_ans
 
 
 student_news = student_get_news()
@@ -237,25 +237,25 @@ async def cmd_start(message: types.Message):
     except TelegramAPIError as e:
         logger.error(f"Ошибка при отправке сообщения: {e}")
 
-@dp.message(Command("?"))
-@dp.message(lambda message: message.text.lower() in ["?", "вопросы"])
-async def cmd_start(message: types.Message):
-    try:
-        await message.answer("Задайте свой вопрос?")
-        user_message = message.text
-        user_id = message.from_user.id
-        user_data[user_id]= {"step": "waiting_for_quest"}
-
-    except TelegramAPIError as e:
-        logger.error(f"Ошибка при отправке сообщения: {e}")
-        await message.answer("Задайте вопрос еще раз.")
-
-@dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_quest")
-async def process_name(message: types.Message):
-    user_id = message.from_user.id
-    quest = message.text
-    await bot.send_sticker(user_id, sticker='CAACAgIAAxkBAAEN7PZnw5QSHc42ibnJokgy3QFClBcKZgACBGUAAsZRGEoi2-q_Kk1_lzYE')
-    await message.answer(gpt_ans(quest, get_user("tg", user_id)))
+# @dp.message(Command("?"))
+# @dp.message(lambda message: message.text.lower() in ["?", "вопросы"])
+# async def cmd_start(message: types.Message):
+#     try:
+#         await message.answer("Задайте свой вопрос?")
+#         user_message = message.text
+#         user_id = message.from_user.id
+#         user_data[user_id]= {"step": "waiting_for_quest"}
+#
+#     except TelegramAPIError as e:
+#         logger.error(f"Ошибка при отправке сообщения: {e}")
+#         await message.answer("Задайте вопрос еще раз.")
+#
+# @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_quest")
+# async def process_name(message: types.Message):
+#     user_id = message.from_user.id
+#     quest = message.text
+#     await bot.send_sticker(user_id, sticker='CAACAgIAAxkBAAEN7PZnw5QSHc42ibnJokgy3QFClBcKZgACBGUAAsZRGEoi2-q_Kk1_lzYE')
+#     await message.answer(gpt_ans(quest, get_user("tg", user_id)))
 
 
 # Обработчик команд /menu, Меню
@@ -528,7 +528,7 @@ async def handle_actions(message: types.Message):
         if user["is_abitur"] == 1:
             if message.text == "Кафедры":
                 await bot.send_sticker(user_id, sticker='CAACAgIAAxkBAAEN7PZnw5QSHc42ibnJokgy3QFClBcKZgACBGUAAsZRGEoi2-q_Kk1_lzYE')
-                await message.answer(gpt_ans("Какие есть кафедры?", get_user("tg", user_id)))
+                await message.answer('Тут вообще должна ответить нейросеть, но у разрабов нет денег, чтобы ее оплатить) Скиньте 1500 пж')
             elif message.text == "Бакалавриат направления":
                 await message.answer("Бакалавриат направления", reply_markup=direction_keyboard)
             elif message.text == "Магистратура направления":

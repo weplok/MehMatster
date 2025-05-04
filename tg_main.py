@@ -542,8 +542,14 @@ async def handle_actions(message: types.Message):
             elif message.text == "События 🎭":
                 await message.answer("Какие новости вас интересуют? 🐱📸", reply_markup=get_inline_keyboard(message.text))
             elif message.text == "Информация о преподавателях 👩‍🏫":
-                await message.answer("Пожалуйста, введите учителя:")
-                user_data[user_id] = {"step": "waiting_for_teacher_fio"}
+                # Создаем клавиатуру с двумя кнопками
+                keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+                button_specific_teacher = KeyboardButton(text="Конкретный преподаватель")
+                button_general_info = KeyboardButton(text="Общая информация о преподавателях")
+
+                keyboard.add(button_specific_teacher, button_general_info)
+
+                await message.answer("Пожалуйста, выберите опцию:", reply_markup=keyboard)
                 return
             elif message.text == "Навигация 🌏":
                 await message.answer("Выберите навигацию:", reply_markup=infrastructure_keyboard)
@@ -554,6 +560,27 @@ async def handle_actions(message: types.Message):
         logger.error(f"Ошибка в обработчике действий: {e}")
         await message.answer("Произошла ошибка ⛔ Пожалуйста, попробуйте позже.")
 
+# Обработчик для кнопки "Конкретный преподаватель"
+@dp.message_handler(lambda message: message.text == "Конкретный преподаватель")
+async def enter_teacher_name(message: types.Message):
+    user_id = message.from_user.id
+    await message.answer("Пожалуйста, введите имя учителя:")
+    user_data[user_id] = {"step": "waiting_for_teacher_fio"}
+    return
+
+# Обработчик для кнопки "Общая информация о преподавателях"
+@dp.message_handler(lambda message: message.text == "Общая информация о преподавателях")
+async def provide_teacher_info(message: types.Message):
+    # Создаем клавиатуру с гиперссылкой
+    keyboard = InlineKeyboardMarkup()
+    button = InlineKeyboardButton(text="Сайт вуза", url="https://sfedu.ru/www/stat_pages22.show?p=ELs/sotr/D&x=ELS/2000000000000")
+    keyboard.add(button)
+
+    await message.answer(
+        "Для получения дополнительной информации вы можете посетить сайт вуза:",
+        reply_markup=keyboard
+    )
+    
 # Запуск бота
 async def main():
     await dp.start_polling(bot)

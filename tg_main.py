@@ -11,7 +11,13 @@ from aiogram.exceptions import TelegramAPIError
 from config import API_TOKEN
 from parsing import base_info_master, base_info_bachalor, student_get_news, student_get_news_mehmat
 # from LLM.gpt_funcs import gpt_ans
+import datetime
 
+
+# База данных для хранения информации о пользователях и времени запросов (в памяти)
+user_request_times = {}
+REQUEST_LIMIT = 5  # Максимальное количество запросов
+TIME_WINDOW = 60 # В секундах
 
 student_news = student_get_news()
 student_mehmath_news = student_get_news_mehmat()
@@ -187,6 +193,8 @@ def get_inline_keyboard(choice: str):
 
 @dp.callback_query(lambda c: c.data.startswith('news_'))
 async def process_news_subchoice(callback_query: types.CallbackQuery):
+    if await anti_spam(callback_query.message):  # Добавляем проверку
+        return  # Прекращаем обработку, если спам
     subchoice = callback_query.data
     await callback_query.answer()
     if subchoice == "news_last":
@@ -231,6 +239,8 @@ def get_teacher_keyboard(name):
 @dp.message(Command("start"))
 @dp.message(lambda message: message.text.lower() in ["старт", "начать", "в начало <-"])
 async def cmd_start(message: types.Message):
+    if await anti_spam(message):
+        return
     try:
         await bot.send_sticker(message.from_user.id, sticker='CAACAgIAAxkBAAEN7PRnw5QEfyJq8OiXvkgYCUAYK_g-QgACEmMAAvlZAUpPtMZ1_L5TTzYE')
         await message.answer("Добро пожаловать!\nМеня зовут кот-МехМатстер 😸\nЯ помогу вам с поступлением или учебой в нашем прекрасном университете ЮФУ города Ростова-на-Дону 🌃\n\nДля начала работы выберите роль:", reply_markup=role_keyboard)
@@ -240,6 +250,8 @@ async def cmd_start(message: types.Message):
 # @dp.message(Command("?"))
 # @dp.message(lambda message: message.text.lower() in ["?", "вопросы"])
 # async def cmd_start(message: types.Message):
+#     if await anti_spam(message):
+#        return
 #     try:
 #         await message.answer("Задайте свой вопрос?")
 #         user_message = message.text
@@ -252,6 +264,8 @@ async def cmd_start(message: types.Message):
 #
 # @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_quest")
 # async def process_name(message: types.Message):
+#     if await anti_spam(message):
+#        return
 #     user_id = message.from_user.id
 #     quest = message.text
 #     await bot.send_sticker(user_id, sticker='CAACAgIAAxkBAAEN7PZnw5QSHc42ibnJokgy3QFClBcKZgACBGUAAsZRGEoi2-q_Kk1_lzYE')
@@ -262,6 +276,8 @@ async def cmd_start(message: types.Message):
 @dp.message(Command("menu"))
 @dp.message(lambda message: message.text.lower() in ["меню", "menu"])
 async def cmd_menu(message: types.Message):
+    if await anti_spam(message):
+        return
     try:
         user_id = message.from_user.id
         user = get_user("tg", user_id)
@@ -280,6 +296,8 @@ async def cmd_menu(message: types.Message):
 # Обработчик выбора роли (студент или абитуриент)
 @dp.message(lambda message: message.text in ["Студент", "Абитуриент"])
 async def process_role(message: types.Message):
+    if await anti_spam(message):
+        return
     try:
         user_id = message.from_user.id
         role = message.text.lower()
@@ -296,6 +314,8 @@ async def process_role(message: types.Message):
 # Обработчик ввода имени
 @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_name")
 async def process_name(message: types.Message):
+    if await anti_spam(message):
+        return
     try:
         user_id = message.from_user.id
         user_data[user_id]["name"] = message.text
@@ -314,6 +334,8 @@ async def process_name(message: types.Message):
 # Обработчик выбора курса (студент)
 @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_course")
 async def process_course(message: types.Message):
+    if await anti_spam(message):
+        return
     try:
         user_id = message.from_user.id
         user_data[user_id]["course"] = message.text
@@ -326,6 +348,8 @@ async def process_course(message: types.Message):
 # Обработчик выбора группы (студент)
 @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_group")
 async def process_group(message: types.Message):
+    if await anti_spam(message):
+        return
     try:
         user_id = message.from_user.id
         user_data[user_id]["group"] = message.text
@@ -338,6 +362,8 @@ async def process_group(message: types.Message):
 
 @dp.callback_query(lambda callback: callback.data.startswith("nav_"))
 async def process_direction(callback: types.CallbackQuery):
+    if await anti_spam(callback.message):
+        return
     try:
         images = ["https://imgur.com/a/oanUdfd.png", "https://imgur.com/a/nUi4hmJ.png",
                   "https://imgur.com/a/jYFm862.png", "https://imgur.com/a/1410HTN.png",
@@ -358,6 +384,8 @@ async def process_direction(callback: types.CallbackQuery):
 # Обработчик повторной регистрации
 @dp.callback_query(lambda callback: callback.data.startswith("choice"))
 async def process_re_registration(callback: types.CallbackQuery):
+    if await anti_spam(callback.message):
+        return
     try:
         user_id = callback.from_user.id
         if callback.data == "choice_yes":
@@ -375,6 +403,8 @@ async def process_re_registration(callback: types.CallbackQuery):
 # Обработчик выбора направления бакалавриата
 @dp.callback_query(lambda callback: callback.data.startswith("direction"))
 async def process_direction(callback: types.CallbackQuery):
+    if await anti_spam(callback.message):
+        return
     try:
         user_id = callback.from_user.id
         label = keyboard_labels[callback.data]
@@ -391,6 +421,8 @@ async def process_direction(callback: types.CallbackQuery):
 
 @dp.callback_query(lambda callback: callback.data.startswith("master"))
 async def process_master(callback: types.CallbackQuery):
+    if await anti_spam(callback.message):
+        return
     try:
         user_id = callback.from_user.id
         label = keyboard_labels_master[callback.data]
@@ -419,6 +451,8 @@ async def process_master(callback: types.CallbackQuery):
 # Обработчик выбора расписания
 @dp.callback_query(lambda c: c.data.startswith('schedule_'))
 async def process_sch_subchoice(callback_query: types.CallbackQuery):
+    if await anti_spam(callback_query.message):
+        return
     try:
         user_id = callback_query.from_user.id
         person = get_user("tg", user_id)
@@ -484,6 +518,8 @@ async def process_sch_subchoice(callback_query: types.CallbackQuery):
 
 @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_teacher_fio")
 async def process_teacher_fio(message: types.Message):
+    if await anti_spam(message):
+        return
     try:
         user_id = message.from_user.id
         fio = message.text
@@ -495,6 +531,8 @@ async def process_teacher_fio(message: types.Message):
 
 @dp.message(lambda message: user_data.get(message.from_user.id, {}).get("step") == "waiting_for_teacher_schedule")
 async def process_teacher_schedule(message: types.Message):
+    if await anti_spam(message):
+        return
     try:
         user_id = message.from_user.id
         fio = message.text
@@ -515,6 +553,8 @@ async def process_teacher_schedule(message: types.Message):
 # Обработчик действий для авторизованного пользователя
 @dp.message()
 async def handle_actions(message: types.Message):
+    if await anti_spam(message):
+        return
     try:
         user_id = message.from_user.id
         chat_id = message.chat.id
@@ -563,6 +603,8 @@ async def handle_actions(message: types.Message):
 # Обработчик для кнопки "Конкретный преподаватель"
 @dp.message_handler(lambda message: message.text == "Конкретный преподаватель")
 async def enter_teacher_name(message: types.Message):
+    if await anti_spam(message):
+        return
     user_id = message.from_user.id
     await message.answer("Пожалуйста, введите имя учителя:")
     user_data[user_id] = {"step": "waiting_for_teacher_fio"}
@@ -571,6 +613,8 @@ async def enter_teacher_name(message: types.Message):
 # Обработчик для кнопки "Общая информация о преподавателях"
 @dp.message_handler(lambda message: message.text == "Общая информация о преподавателях")
 async def provide_teacher_info(message: types.Message):
+    if await anti_spam(message):
+        return
     # Создаем клавиатуру с гиперссылкой
     keyboard = InlineKeyboardMarkup()
     button = InlineKeyboardButton(text="Сайт вуза", url="https://sfedu.ru/www/stat_pages22.show?p=ELs/sotr/D&x=ELS/2000000000000")
@@ -580,6 +624,26 @@ async def provide_teacher_info(message: types.Message):
         "Для получения дополнительной информации вы можете посетить сайт вуза:",
         reply_markup=keyboard
     )
+
+async def anti_spam(message: types.Message) -> bool:
+    user_id = message.from_user.id
+    current_time = datetime.datetime.now()
+
+    if user_id in user_request_times:
+        requests = user_request_times[user_id]
+        requests = [time for time in requests if (current_time - time).total_seconds() <= TIME_WINDOW]
+        if len(requests) >= REQUEST_LIMIT:
+            await message.reply(
+                "Пожалуйста, не отправляйте запросы так часто. Попробуйте через {} секунд.".format(
+                    TIME_WINDOW - int((current_time - requests[0]).total_seconds())
+                )
+            )
+            return True  # Прекращаем обработку
+        requests.append(current_time)
+        user_request_times[user_id] = requests
+    else:
+        user_request_times[user_id] = [current_time]
+    return False  # Продолжаем обработку
     
 # Запуск бота
 async def main():

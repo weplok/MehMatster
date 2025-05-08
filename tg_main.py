@@ -12,6 +12,7 @@ from config import API_TOKEN
 from parsing import base_info_master, base_info_bachalor, student_get_news, student_get_news_mehmat
 # from LLM.gpt_funcs import gpt_ans
 import datetime
+from aiogram import F
 
 
 # База данных для хранения информации о пользователях и времени запросов (в памяти)
@@ -603,7 +604,8 @@ async def handle_actions(message: types.Message):
         await message.answer("Произошла ошибка ⛔ Пожалуйста, попробуйте позже.")
 
 # Обработчик для кнопки "Конкретный преподаватель"
-@dp.message_handler(lambda message: message.text == "Конкретный преподаватель")
+#@dp.message_handler(lambda message: message.text == "Конкретный преподаватель")
+@dp.message(F.text == "Конкретный преподаватель")
 async def enter_teacher_name(message: types.Message):
     if await anti_spam(message):
         return
@@ -613,7 +615,8 @@ async def enter_teacher_name(message: types.Message):
     return
 
 # Обработчик для кнопки "Общая информация о преподавателях"
-@dp.message_handler(lambda message: message.text == "Общая информация о преподавателях")
+#@dp.message_handler(lambda message: message.text == "Общая информация о преподавателях")
+@dp.message(F.text == "Общая информация о преподавателях")
 async def provide_teacher_info(message: types.Message):
     if await anti_spam(message):
         return

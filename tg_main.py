@@ -42,6 +42,16 @@ role_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
+#клавиатура с преподавателями
+teacher_info_keyboard = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Конкретный преподаватель")],
+        [KeyboardButton(text="Общая информация о преподавателях")]
+    ],
+    resize_keyboard=True
+)
+
+
 # Клавиатура для выбора курса (студент)
 course_keyboard = ReplyKeyboardMarkup(
     keyboard=[
@@ -582,15 +592,7 @@ async def handle_actions(message: types.Message):
             elif message.text == "События 🎭":
                 await message.answer("Какие новости вас интересуют? 🐱📸", reply_markup=get_inline_keyboard(message.text))
             elif message.text == "Информация о преподавателях 👩‍🏫":
-                # Создаем клавиатуру с двумя кнопками
-                keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-                button_specific_teacher = KeyboardButton(text="Конкретный преподаватель")
-                button_general_info = KeyboardButton(text="Общая информация о преподавателях")
-
-                keyboard.add(button_specific_teacher, button_general_info)
-
-                await message.answer("Пожалуйста, выберите опцию:", reply_markup=keyboard)
-                return
+                await message.answer("Пожалуйста, выберите опцию:", reply_markup=teacher_info_keyboard)
             elif message.text == "Навигация 🌏":
                 await message.answer("Выберите навигацию:", reply_markup=infrastructure_keyboard)
 

@@ -17,7 +17,7 @@ import datetime
 # База данных для хранения информации о пользователях и времени запросов (в памяти)
 user_request_times = {}
 REQUEST_LIMIT = 5  # Максимальное количество запросов
-TIME_WINDOW = 60 # В секундах
+TIME_WINDOW = 20 # В секундах
 
 student_news = student_get_news()
 student_mehmath_news = student_get_news_mehmat()

@@ -60,6 +60,7 @@ def schedule_parser(response: dict, period: str) -> dict:
     # Вспомогательная функция, не для обычного использования
     lessons = pandas.DataFrame(response["lessons"])
     lessons["weekday"] = lessons["timeslot"].transform(lambda x: x[1])
+    lessons["timeslot"].transform(lambda x: print(x[1]))
     lessons["start_time"] = lessons["timeslot"].transform(lambda x: x[3:8])
     lessons["end_time"] = lessons["timeslot"].transform(lambda x: x[12:17])
     lessons = lessons.sort_values(by=["weekday", "start_time"])

@@ -84,3 +84,19 @@ def get_user(db_code: str, uid: int) -> dict:
                                          (user_dict["group"],)).fetchone()[0]
 
     return user_dict
+
+
+
+def get_all_user_ids(db_code: str) -> list:
+    if db_code not in ["vk", "tg"]:
+        return []
+    db_path = get_db_path(db_code)
+    con = sqlite3.connect(db_path)
+    cur = con.cursor()
+
+    user_list = cur.execute("SELECT id FROM users").fetchall()
+    if not user_list:
+        return []
+    cur.close()
+    con.close()
+    return list(map(lambda x: x[0], user_list))

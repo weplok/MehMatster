@@ -6,7 +6,7 @@ import logging
 import pprint
 import ast
 
-from functions.db_funcs import create_user, get_user
+from functions.db_funcs import create_user, get_user, get_all_user_ids
 from functions.schedule import get_groups, get_schedule, get_teachers, get_teacher_schedule
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
@@ -14,6 +14,9 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 from aiogram.exceptions import TelegramAPIError
 from parsing import base_info_master, base_info_bachalor, student_get_news, student_get_news_mehmat
 # from LLM.gpt_funcs import gpt_ans
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+aps_scheduler = AsyncIOScheduler()
 
 hosting_config_path = "/data/config.py"
 if os.path.isfile(hosting_config_path):
@@ -31,6 +34,7 @@ else:
 
 student_news = student_get_news()
 student_mehmath_news = student_get_news_mehmat()
+users_id = get_all_user_ids("tg")
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -181,6 +185,16 @@ def format_schedule(schedule):
             )
         result.append("")  # Пустая строка для разделения дней
     return "\n".join(result)
+
+
+async def schedule_mailing(callback_query: types.CallbackQuery):
+    for user_id in users_id:
+        schedule_text = f"{get_schedule(user_id['course'], user_id['group'], 'today')}"
+        start_index = schedule_text.find("{")
+        end_index = schedule_text.rfind("}") + 1
+        schedule_data = ast.literal_eval(schedule_text[start_index:end_index])
+        await callback_query.message.answer(f"{format_schedule(schedule_data)}")
+
 
 # Клавиатура для выбора расписания
 def get_inline_keyboard(choice: str):
@@ -535,7 +549,6 @@ async def handle_actions(message: types.Message):
         user_id = message.from_user.id
         chat_id = message.chat.id
         logger.info(f"Пользователь {user_id} выбрал действие: {message.text}")
-
         user = get_user("tg", user_id)
         if user is None:
             await message.answer("Пожалуйста, завершите регистрацию")
@@ -571,9 +584,47 @@ async def handle_actions(message: types.Message):
         await message.answer("Произошла ошибка ⛔ Пожалуйста, попробуйте позже.")
 
 
+async def notify_one_user(user_id):
+    person = get_user("tg", user_id)
+    sched = get_schedule(person['course'], person['group'], 'today')
+    is_none = True
+    if not sched:
+        is_none = False
+    schedule_text = f"{sched}"
+    start_index = schedule_text.find("{")
+    end_index = schedule_text.rfind("}") + 1
+    schedule_data = ast.literal_eval(schedule_text[start_index:end_index])
+    if is_none:
+        await bot.send_message(user_id, f"Ваше расписание на сегодня: \n {format_schedule(schedule_data)}")
+    else:
+        await bot.send_message(user_id, f"с днем выходного")
+
+
+async def notify_all_users_job():
+    user_ids = get_all_user_ids("tg")
+    send_tasks = []
+    for user_id in user_ids:
+        task = asyncio.create_task(notify_one_user(user_id))
+        send_tasks.append(task)
+
+    await asyncio.gather(*send_tasks)
+
+
+def on_startup():
+    aps_scheduler.add_job(notify_all_users_job, 'cron', day_of_week='mon-sat', hour=7, minute=30, end_date='2026-01-01')
+
+
 # Запуск бота
 async def main():
-    await dp.start_polling(bot)
+    aps_scheduler.start()
+    # способ для пропуска старых апдейтов для 3 версии аиограма
+    await bot.delete_webhook(drop_pending_updates=True)
+    # собственно способ зарегистрировать функцию которая сработает при запуске бота
+    dp.startup.register(on_startup)
+    # в allowed_updates можно передать вызов метода resolve_used_update_types() от диспетчера,
+    # который пройдёт по всем роутерам, узнает, хэндлеры на какие типы есть в коде,
+    # и попросить Telegram присылать апдейты только про них
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
 if __name__ == '__main__':

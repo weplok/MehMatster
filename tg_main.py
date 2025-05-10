@@ -596,39 +596,18 @@ async def handle_actions(message: types.Message):
                 await message.answer("Пожалуйста, выберите опцию:", reply_markup=teacher_info_keyboard)
             elif message.text == "Навигация 🌏":
                 await message.answer("Выберите навигацию:", reply_markup=infrastructure_keyboard)
-
+            elif message.text == 'Конкретный преподаватель':
+                await message.answer("Пожалуйста, введите учителя:")
+                user_data[user_id] = {"step": "waiting_for_teacher_fio"}
+                return
+            elif message.text == 'Общая информация о преподавателях':
+                await message.answer(
+                    "Для получения дополнительной информации вы можете посетить сайт вуза: https://sfedu.ru/www/stat_pages22.show?p=ELs/sotr/D&x=ELS/2000000000000")
             else:
                 await message.answer("Используйте кнопки для взаимодействия.")
     except Exception as e:
         logger.error(f"Ошибка в обработчике действий: {e}")
         await message.answer("Произошла ошибка ⛔ Пожалуйста, попробуйте позже.")
-
-# Обработчик для кнопки "Конкретный преподаватель"
-#@dp.message_handler(lambda message: message.text == "Конкретный преподаватель")
-@dp.message(F.text == "Конкретный преподаватель")
-async def enter_teacher_name(message: types.Message):
-    if await anti_spam(message):
-        return
-    user_id = message.from_user.id
-    await message.answer("Пожалуйста, введите имя учителя:")
-    user_data[user_id] = {"step": "waiting_for_teacher_fio"}
-    return
-
-# Обработчик для кнопки "Общая информация о преподавателях"
-#@dp.message_handler(lambda message: message.text == "Общая информация о преподавателях")
-@dp.message(F.text == "Общая информация о преподавателях")
-async def provide_teacher_info(message: types.Message):
-    if await anti_spam(message):
-        return
-    # Создаем клавиатуру с гиперссылкой
-    keyboard = InlineKeyboardMarkup()
-    button = InlineKeyboardButton(text="Сайт вуза", url="https://sfedu.ru/www/stat_pages22.show?p=ELs/sotr/D&x=ELS/2000000000000")
-    keyboard.add(button)
-
-    await message.answer(
-        "Для получения дополнительной информации вы можете посетить сайт вуза:",
-        reply_markup=keyboard
-    )
 
 async def anti_spam(message: types.Message) -> bool:
     user_id = message.from_user.id

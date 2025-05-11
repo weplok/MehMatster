@@ -41,7 +41,6 @@ TIME_WINDOW = 20 # В секундах
 
 student_news = student_get_news()
 student_mehmath_news = student_get_news_mehmat()
-users_id = get_all_user_ids("tg")
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -202,15 +201,6 @@ def format_schedule(schedule):
             )
         result.append("")  # Пустая строка для разделения дней
     return "\n".join(result)
-
-
-async def schedule_mailing(callback_query: types.CallbackQuery):
-    for user_id in users_id:
-        schedule_text = f"{get_schedule(user_id['course'], user_id['group'], 'today')}"
-        start_index = schedule_text.find("{")
-        end_index = schedule_text.rfind("}") + 1
-        schedule_data = ast.literal_eval(schedule_text[start_index:end_index])
-        await callback_query.message.answer(f"{format_schedule(schedule_data)}")
 
 
 # Клавиатура для выбора расписания

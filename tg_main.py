@@ -713,7 +713,7 @@ async def notify_all_users_job():
 
 
 def on_startup():
-    aps_scheduler.add_job(notify_all_users_job, 'cron', day_of_week='mon-sat', hour=7, minute=30, end_date='2026-01-01')
+    aps_scheduler.add_job(notify_all_users_job, 'cron', day_of_week='mon-sat', hour=4, minute=30, end_date='2026-01-01')
 
 
 # Запуск бота

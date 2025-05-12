@@ -34,5 +34,5 @@ python tg_main.py
 ```bash
 python vk_main.py
 
-[42_cats_presentation.pptx](https://github.com/user-attachments/files/20178001/42_cats_presentation.pptx)
 ```
+[42_cats_presentation.pptx](https://github.com/user-attachments/files/20178001/42_cats_presentation.pptx)

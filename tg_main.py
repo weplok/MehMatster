@@ -66,7 +66,8 @@ role_keyboard = ReplyKeyboardMarkup(
 teacher_info_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Конкретный преподаватель")],
-        [KeyboardButton(text="Общая информация о преподавателях")]
+        [KeyboardButton(text="Общая информация о преподавателях")],
+        [KeyboardButton(text="Назад ↩")]
     ],
     resize_keyboard=True
 )
@@ -173,7 +174,20 @@ main_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Мое расписание 📆"), KeyboardButton(text="События 🎭")],
         [KeyboardButton(text="Информация о преподавателях 👩‍🏫"), KeyboardButton(text="Навигация 🌏")],
-        [KeyboardButton(text="В начало <-")],
+        [KeyboardButton(text="Библиотека ЮФУ 📚"), KeyboardButton(text="В начало <-")],
+    ],
+    resize_keyboard=True
+)
+
+# Клавиатура для работы с библиотекой
+library_keyboard = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Адрес")],
+        [KeyboardButton(text="Часы работы"),
+         KeyboardButton(text="Телефонный номер")],
+        [KeyboardButton(text="Показать на карте"),
+         KeyboardButton(text="Официальный сайт")],
+        [KeyboardButton(text="Назад ↩")]
     ],
     resize_keyboard=True
 )
@@ -479,6 +493,25 @@ async def process_master(callback: types.CallbackQuery):
 #         logger.error(f"Ошибка при выборе подкатегории ПМИ: {e}")
 #         await callback.message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.")
 
+# Обработчик кнопки "Библиотека"
+@dp.message(lambda message: message.text in ['Адрес', 'Часы работы', 'Телефонный номер', 'Показать на карте', 'Официальный сайт', "Назад ↩"])
+async def library_inf(message: types.Message):
+    if await anti_spam(message):
+        return
+    if message.text == "Адрес":
+        await message.answer("Библиотека находится по адресу р-н Кировский, Пушкинская улица, 148.")
+    elif message.text == "Часы работы":
+        await message.answer("График работы: \nПн-пт: 09:00 - 19:00;\nсб: 09:00 - 17:00.")
+    elif message.text == "Телефонный номер":
+        await message.answer("Более подробную информацию вы можете получить по телефону 78632184000.")
+    elif message.text == 'Показать на карте':
+        await message.answer("https://yandex.ru/maps/39/rostov-na-donu/?ll=39.725454%2C47.226863&mode=routes&rtext=~47.226863%2C39.725454&rtt=auto&ruri=~&source=route&source=route&z=14")
+    elif message.text == 'Официальный сайт':
+        await message.answer("Чтобы посетить официальный сайт библиотеки, перейдите по ссылке:"
+                             " https://library.lib.sfedu.ru/")
+    elif message.text == 'Назад ↩':
+        await message.answer("Выберите, что вас интересует", reply_markup=main_keyboard)
+
 # Обработчик выбора расписания
 @dp.callback_query(lambda c: c.data.startswith('schedule_'))
 async def process_sch_subchoice(callback_query: types.CallbackQuery):
@@ -621,6 +654,8 @@ async def handle_actions(message: types.Message):
                 await message.answer("Пожалуйста, введите учителя:")
                 user_data[user_id] = {"step": "waiting_for_teacher_fio"}
                 return
+            elif message.text == "Библиотека ЮФУ 📚":
+                await message.answer('Выберите интересующую информацию:', reply_markup=library_keyboard)
             elif message.text == 'Общая информация о преподавателях':
                 await message.answer('<a href="https://sfedu.ru/www/stat_pages22.show?p=ELs/sotr/D&x=ELS/2000000000000">''Для получения дополнительной информации вы можете посетить наш cайт''</a>', parse_mode="HTML")
             else:

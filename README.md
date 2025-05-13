@@ -33,3 +33,8 @@ python tg_main.py
 
 ```bash
 python vk_main.py
+
+[ссылка на презентацию](https://disk.yandex.ru/d/ZIbQimqFICzQRw)
+
+
+

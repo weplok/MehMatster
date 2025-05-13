@@ -1,6 +1,9 @@
 # MehMatster
 Дружелюбный чат-бот помощник для студентов Мехмата ЮФУ в ТГ и ВК
 
+[ссылка на презентацию](https://disk.yandex.ru/d/ZIbQimqFICzQRw)
+
+
 Пайплайн запуска:
 
 1. Установите завимимости
@@ -33,8 +36,6 @@ python tg_main.py
 
 ```bash
 python vk_main.py
-
-[ссылка на презентацию](https://disk.yandex.ru/d/ZIbQimqFICzQRw)
 
 
 
